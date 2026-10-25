@@ -102,6 +102,16 @@ joyEl.addEventListener('pointermove',e=>{if(e.pointerId===joyId)joyMove(e)});
 function joyMove(e){const r=joyEl.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let dx=e.clientX-cx,dy=e.clientY-cy,mag=Math.hypot(dx,dy),max=35;if(mag>max){dx=dx/mag*max;dy=dy/mag*max}joy.x=dx/max;joy.y=dy/max;stick.style.transform='translate('+dx+'px,'+dy+'px)'}
 function joyEnd(e){if(e.pointerId===joyId){joyId=null;joy.x=joy.y=0;stick.style.transform='translate(0,0)'}}
 joyEl.addEventListener('pointerup',joyEnd);joyEl.addEventListener('pointercancel',joyEnd);
+// CHORAO-FOCUS-SAFETY: evita movimento preso ao trocar de janela ou perder o foco.
+function releaseControls(){
+ for(const key in keys)keys[key]=false;
+ joy.x=0;joy.y=0;joyId=null;
+ stick.style.transform='translate(0,0)';
+ if(isRunning){isRunning=false;document.getElementById('runBtn').textContent='⇧ Correr: desligado'}
+}
+window.addEventListener('blur',releaseControls);
+document.addEventListener('visibilitychange',()=>{if(document.hidden){releaseControls();try{saveProgress()}catch(e){console.warn('Não foi possível salvar ao ocultar a página',e)}}});
+window.addEventListener('pagehide',()=>{releaseControls();try{saveProgress()}catch(e){console.warn('Não foi possível salvar ao sair da página',e)}});
 let crystalTime=0;
 scene.onBeforeRenderObservable.add(()=>{
  const dt=Math.min(engine.getDeltaTime()/1000,.05),t=performance.now()/1000;

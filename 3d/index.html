@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#101b2c">
+<title>CHORÃO ONLINE — Vale Esquecido 3D (Protótipo)</title>
+<style>
+:root{color-scheme:dark;--gold:#e8c77b;--glass:rgba(9,18,28,.78);--line:rgba(232,199,123,.35)}
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101b2c;color:#f4f0df;font-family:Inter,system-ui,Segoe UI,sans-serif;touch-action:none}
+#renderCanvas{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none}
+.hud{position:fixed;z-index:2;pointer-events:none}
+.top{top:14px;left:14px;right:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.brand,.panel{background:linear-gradient(135deg,rgba(10,20,30,.9),rgba(18,34,43,.74));border:1px solid var(--line);box-shadow:0 12px 35px #0005;backdrop-filter:blur(12px);border-radius:14px}
+.brand{padding:12px 16px;max-width:min(420px,68vw)}.brand strong{display:block;letter-spacing:.16em;font-size:12px;color:var(--gold)}.brand span{display:block;font-size:11px;color:#d4d5c9;margin-top:4px}
+.status{padding:10px 13px;min-width:160px;text-align:right;font-size:11px;line-height:1.6;color:#d6e4d8}.status b{color:#9ed5a8}
+.quest{left:14px;top:112px;width:min(270px,62vw);padding:14px 15px}.eyebrow{color:var(--gold);font-size:10px;letter-spacing:.15em;text-transform:uppercase}.quest h2{font-size:15px;margin:6px 0 7px;font-weight:650}.quest p{font-size:12px;line-height:1.55;color:#c7d1ca;margin:0}.objective{margin-top:10px;padding-top:9px;border-top:1px solid #ffffff17;font-size:11px;color:#e7d8ad}
+.bottom{bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:8px;align-items:center;justify-content:center;width:calc(100% - 28px);flex-wrap:wrap}
+.chip{pointer-events:auto;cursor:pointer;border:1px solid var(--line);border-radius:11px;padding:10px 13px;background:var(--glass);color:#f4f0df;font-size:12px;backdrop-filter:blur(8px);box-shadow:0 8px 20px #0003}.chip:active{transform:translateY(1px)}.chip.primary{background:linear-gradient(135deg,#8c6b36,#4d633e);border-color:#d5b96b}.help{position:fixed;right:14px;bottom:76px;max-width:250px;padding:10px 12px;font-size:11px;line-height:1.55;color:#d8dfd8}
+#joystick{display:none;position:fixed;left:22px;bottom:88px;width:112px;height:112px;border-radius:50%;border:1px solid #e8c77b88;background:#08152288;z-index:4;touch-action:none}
+#stick{position:absolute;left:34px;top:34px;width:42px;height:42px;border-radius:50%;background:#e8c77bcc;border:1px solid #fff9;box-shadow:0 0 20px #e8c77b55}
+#notice{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5;background:#0a1422ed;border:1px solid var(--line);border-radius:14px;padding:18px 20px;max-width:min(420px,88vw);font-size:13px;line-height:1.6;text-align:center;box-shadow:0 20px 70px #0009}
+#notice[hidden]{display:none}.tiny{font-size:10px;color:#aab8b0;margin-top:8px}
+@media(max-width:600px){.top{top:8px;left:8px;right:8px}.brand{padding:10px 11px}.brand strong{font-size:10px}.brand span{font-size:10px}.status{min-width:100px;padding:8px;font-size:10px}.quest{top:84px;left:8px;padding:10px;width:190px}.quest h2{font-size:13px}.quest p{font-size:10px}.objective{font-size:10px}.help{right:8px;bottom:74px;max-width:155px;font-size:10px}.bottom{bottom:8px;gap:5px}.chip{padding:9px 10px;font-size:11px}#joystick{display:block}}
+</style>
+</head>
+<body>
+<canvas id="renderCanvas" aria-label="Mundo 3D do CHORÃO ONLINE"></canvas>
+<div class="hud top"><div class="brand"><strong>CHORÃO ONLINE</strong><span>O Vale Esquecido · demonstração 3D</span></div><div class="panel status">ESTADO: <b id="state">iniciando mundo…</b><br>JOGADOR: <span id="playerName">Viajante</span></div></div>
+<div class="hud panel quest"><div class="eyebrow">Missão inicial · 01</div><h2>O chamado do vale</h2><p>Explore a clareira antiga e aproxime-se do cristal para despertar sua luz.</p><div class="objective" id="objective">◇ Cristal antigo: ainda não encontrado</div></div>
+<div class="hud help">PC: <b>W A S D</b> ou setas para andar · <b>Shift</b> para correr · mouse para observar<br>Celular: use o controle virtual e os botões abaixo.</div>
+<div class="hud bottom"><button class="chip primary" id="runBtn">⇧ Correr: desligado</button><button class="chip" id="magicBtn">✧ Despertar cristal</button><button class="chip" id="cameraBtn">◉ Recentrar câmera</button><button class="chip" id="infoBtn">ⓘ Sobre a demo</button></div>
+<div id="joystick" aria-label="Controle virtual"><div id="stick"></div></div>
+<div id="notice" hidden></div>
+<script src="https://cdn.babylonjs.com/babylon.js"></script>
+<script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+<script>
+(()=> {
+const canvas=document.getElementById('renderCanvas'), stateEl=document.getElementById('state'), objective=document.getElementById('objective');
+const notice=document.getElementById('notice');
+const engine=new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:false,stencil:true,antialias:true},true);
+engine.setHardwareScalingLevel(Math.min(1.35,window.devicePixelRatio>1?1.15:1));
+const scene=new BABYLON.Scene(engine);
+scene.clearColor=new BABYLON.Color4(.45,.65,.68,1);
+scene.fogMode=BABYLON.Scene.FOGMODE_EXP2;scene.fogDensity=.009;scene.fogColor=new BABYLON.Color3(.45,.62,.61);
+const camera=new BABYLON.ArcRotateCamera('camera',-Math.PI/2,1.13,10,new BABYLON.Vector3(0,1,0),scene);
+camera.lowerRadiusLimit=5;camera.upperRadiusLimit=14;camera.lowerBetaLimit=.55;camera.upperBetaLimit=1.38;camera.wheelPrecision=45;camera.panningSensibility=0;camera.attachControl(canvas,true);
+const hemi=new BABYLON.HemisphericLight('skyLight',new BABYLON.Vector3(0,1,0),scene);hemi.intensity=.72;hemi.groundColor=new BABYLON.Color3(.22,.29,.2);
+const sun=new BABYLON.DirectionalLight('sun',new BABYLON.Vector3(-.55,-1,.4),scene);sun.position=new BABYLON.Vector3(20,35,-15);sun.intensity=1.25;
+const shadows=new BABYLON.ShadowGenerator(1024,sun);shadows.useBlurExponentialShadowMap=true;shadows.blurKernel=18;shadows.setDarkness(.3);
+const mat=(name,color,rough=.9)=>{const m=new BABYLON.StandardMaterial(name,scene);m.diffuseColor=BABYLON.Color3.FromHexString(color);m.specularColor=new BABYLON.Color3(.12,.12,.12);m.roughness=rough;return m};
+const grass=mat('musgo profundo','#426b4d'), pathMat=mat('trilha antiga','#8a7956'), bark=mat('casca de árvore','#493a2d'), leaf1=mat('folhagem esmeralda','#285a45'),leaf2=mat('folhagem iluminada','#477a50'),stone=mat('pedra fria','#687c7c'),gold=mat('cristal âmbar','#ffce75',.35);gold.emissiveColor=new BABYLON.Color3(.65,.28,.035);
+const ground=BABYLON.MeshBuilder.CreateGround('vale', {width:100,height:100,subdivisions:48},scene);ground.material=grass;ground.receiveShadows=true;
+// Textura procedural subtil para o solo, sem ficheiros externos.
+const tex=new BABYLON.DynamicTexture('groundGrain',{width:512,height:512},scene,false);const ctx=tex.getContext();ctx.fillStyle='#426b4d';ctx.fillRect(0,0,512,512);let seed=42;const rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};for(let i=0;i<16000;i++){const v=Math.floor(45+rnd()*55);ctx.fillStyle='rgba('+v+','+(v+35)+','+(v-5)+','+(rnd()*.17)+')';ctx.fillRect(rnd()*512,rnd()*512,1+rnd()*3,1+rnd()*3)}tex.update();grass.diffuseTexture=tex;grass.diffuseTexture.uScale=12;grass.diffuseTexture.vScale=12;
+const path=BABYLON.MeshBuilder.CreateGround('trilha',{width:3.2,height:35,subdivisions:2},scene);path.position.set(0,.025,7);path.rotation.y=.12;path.material=pathMat;
+function tree(x,z,s=1,variant=0){const trunk=BABYLON.MeshBuilder.CreateCylinder('tronco',{height:2.4*s,diameterTop:.22*s,diameterBottom:.48*s,tessellation:9},scene);trunk.position.set(x,1.2*s,z);trunk.material=bark;trunk.rotation.z=(rnd()-.5)*.12;trunk.receiveShadows=true;const crown=BABYLON.MeshBuilder.CreateSphere('copa',{diameter:2.15*s,segments:7},scene);crown.scaling.y=1.3;crown.position.set(x,2.65*s,z);crown.material=variant?leaf2:leaf1;crown.receiveShadows=true;shadows.addShadowCaster(trunk);shadows.addShadowCaster(crown);return [trunk,crown]}
+for(let i=0;i<70;i++){let angle=rnd()*Math.PI*2,rad=12+rnd()*30,x=Math.cos(angle)*rad,z=Math.sin(angle)*rad+2;if(Math.abs(x)<4&&z>-12&&z<24)continue;tree(x,z,.75+rnd()*.95,rnd()>.72?1:0)}
+for(let i=0;i<25;i++){let x=(rnd()-.5)*22,z=(rnd()-.5)*25+2;if(Math.abs(x)<3&&z>-10&&z<18)continue;const rock=BABYLON.MeshBuilder.CreatePolyhedron('rocha',{type:1,size:.4+rnd()*.8},scene);rock.position.set(x,.2,z);rock.scaling.y=.5+rnd()*.8;rock.rotation.set(rnd(),rnd()*3,rnd());rock.material=stone;rock.receiveShadows=true}
+const crystalRoot=new BABYLON.TransformNode('cristal-antigo',scene);crystalRoot.position.set(1.3,.8,-5);
+for(let i=0;i<3;i++){const c=BABYLON.MeshBuilder.CreatePolyhedron('fragmento-cristal',{type:1,size:.48},scene);c.parent=crystalRoot;c.position.set((i-1)*.35,.1+i*.16,0);c.scaling.set(.55,1.65-i*.15,.55);c.rotation.z=(i-1)*.22;c.material=gold}
+const ring=BABYLON.MeshBuilder.CreateTorus('runa',{diameter:2.3,thickness:.035,tessellation:64},scene);ring.position.set(1.3,.08,-5);ring.rotation.x=Math.PI/2;ring.material=gold;
+const particles=new BABYLON.ParticleSystem('poeira magica',500,scene);particles.particleTexture=new BABYLON.Texture('https://assets.babylonjs.com/textures/flare.png',scene);particles.emitter=new BABYLON.Vector3(1.3,1,-5);particles.minEmitBox=new BABYLON.Vector3(-1,0,-1);particles.maxEmitBox=new BABYLON.Vector3(1,2,1);particles.color1=new BABYLON.Color4(1,.78,.35,.9);particles.color2=new BABYLON.Color4(.4,.9,.72,.6);particles.colorDead=new BABYLON.Color4(.1,.2,.2,0);particles.minSize=.025;particles.maxSize=.12;particles.minLifeTime=1;particles.maxLifeTime=3;particles.emitRate=65;particles.blendMode=BABYLON.ParticleSystem.BLENDMODE_ADD;particles.gravity=new BABYLON.Vector3(0,.12,0);particles.direction1=new BABYLON.Vector3(-.2,.2,-.2);particles.direction2=new BABYLON.Vector3(.2,.8,.2);particles.start();
+const playerRoot=new BABYLON.TransformNode('jogador',scene);playerRoot.position.set(0,0,4);
+let player=null,animGroups=[],walkAnim=null,idleAnim=null,runAnim=null,modelReady=false,crystalFound=false,isRunning=false;
+const keys={};let joy={x:0,y:0};let moveVec=new BABYLON.Vector3(0,0,0);let lastTime=performance.now();let worldReady=false;
+// Modelo humano real importado de amostra glTF com licença CC BY 4.0; protótipo, não o herói final.
+BABYLON.SceneLoader.ImportMeshAsync(null,'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CesiumMan/glTF-Binary/','CesiumMan.glb',scene).then(result=>{
+ player=new BABYLON.TransformNode('modelo-jogador',scene);player.parent=playerRoot;
+ result.meshes.forEach(m=>{if(m!==scene.meshes[0]){m.parent=player; m.receiveShadows=true;shadows.addShadowCaster(m)}});
+ const bounds=result.meshes.filter(m=>m.getTotalVertices&&m.getTotalVertices()>0).map(m=>m.getBoundingInfo().boundingBox);
+ if(bounds.length){let minY=Infinity,maxY=-Infinity;bounds.forEach(b=>{minY=Math.min(minY,b.minimumWorld.y);maxY=Math.max(maxY,b.maximumWorld.y)});const h=maxY-minY;if(h>0){player.scaling.setAll(2.05/h);player.position.y=-minY*2.05/h}}
+ animGroups=result.animationGroups||[];
+ if(animGroups.length){idleAnim=animGroups[0];idleAnim.start(true);walkAnim=animGroups.find(a=>/walk|run|step/i.test(a.name))||animGroups[0];runAnim=animGroups.find(a=>/run/i.test(a.name))||walkAnim}
+ modelReady=true;stateEl.textContent='mundo carregado';noticeShow('O vale está pronto para explorar.','Use WASD ou as setas no computador. No celular, mova o controle virtual. Aproxime-se do cristal dourado.');setTimeout(()=>{if(notice.textContent.includes('O vale está pronto'))notice.hidden=true},5200);
+}).catch(err=>{console.error('Falha ao carregar o modelo humano:',err);stateEl.textContent='erro ao carregar personagem';noticeShow('O cenário 3D foi carregado, mas o personagem externo não pôde ser baixado neste dispositivo. Verifique a conexão e recarregue a página.','O jogo não substituirá o personagem por uma caixa ou boneco improvisado.');});
+function noticeShow(main,sub=''){notice.innerHTML='<div>'+main+'</div>'+(sub?'<div class="tiny">'+sub+'</div>':'')+'<div style="margin-top:12px"><button class="chip" id="closeNotice">Continuar</button></div>';notice.hidden=false;document.getElementById('closeNotice').onclick=()=>notice.hidden=true}
+document.getElementById('infoBtn').onclick=()=>noticeShow('Esta é a primeira fatia técnica 3D do CHORÃO ONLINE.','O personagem é uma amostra humana licenciada para validar carregamento e animações. Não é o herói final, não há multiplayer conectado nesta versão e o visual ainda está em desenvolvimento.');
+document.getElementById('runBtn').onclick=()=>{isRunning=!isRunning;document.getElementById('runBtn').textContent='⇧ Correr: '+(isRunning?'ligado':'desligado')};
+document.getElementById('cameraBtn').onclick=()=>{camera.alpha=-Math.PI/2;camera.beta=1.13;camera.radius=10};
+document.getElementById('magicBtn').onclick=()=>{if(BABYLON.Vector3.Distance(playerRoot.position,crystalRoot.position)<5){crystalFound=true;gold.emissiveColor=new BABYLON.Color3(1,.72,.18);particles.emitRate=180;objective.textContent='✦ Cristal antigo: luz despertada!';noticeShow('O cristal respondeu à sua presença!','Primeiro objetivo concluído. A progressão e as recompensas persistentes serão implementadas numa etapa posterior.')}else noticeShow('O cristal está adiante, na clareira.','Siga a trilha até o brilho dourado e tente novamente.')};
+window.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(['arrowup','arrowdown','arrowleft','arrowright',' '].includes(e.key.toLowerCase()))e.preventDefault();if(e.key==='Shift')isRunning=true});
+window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;if(e.key==='Shift')isRunning=false});
+const joyEl=document.getElementById('joystick'),stick=document.getElementById('stick');let joyId=null;
+joyEl.addEventListener('pointerdown',e=>{joyId=e.pointerId;joyEl.setPointerCapture(joyId);joyMove(e)});
+joyEl.addEventListener('pointermove',e=>{if(e.pointerId===joyId)joyMove(e)});
+function joyMove(e){const r=joyEl.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let dx=e.clientX-cx,dy=e.clientY-cy,mag=Math.hypot(dx,dy),max=35;if(mag>max){dx=dx/mag*max;dy=dy/mag*max}joy.x=dx/max;joy.y=dy/max;stick.style.transform='translate('+dx+'px,'+dy+'px)'}
+function joyEnd(e){if(e.pointerId===joyId){joyId=null;joy.x=joy.y=0;stick.style.transform='translate(0,0)'}}
+joyEl.addEventListener('pointerup',joyEnd);joyEl.addEventListener('pointercancel',joyEnd);
+let crystalTime=0;
+scene.onBeforeRenderObservable.add(()=>{
+ const dt=Math.min(engine.getDeltaTime()/1000,.05),t=performance.now()/1000;
+ crystalRoot.position.y=.8+Math.sin(t*1.4)*.13;crystalRoot.rotation.y+=dt*.28;ring.rotation.z+=dt*.18;
+ const forward=(keys.w||keys.arrowup?1:0)-(keys.s||keys.arrowdown?1:0)-joy.y;
+ const strafe=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0)+joy.x;
+ const mag=Math.hypot(forward,strafe);let moving=mag>.12;
+ if(moving&&modelReady){const f=forward/(mag||1),s=strafe/(mag||1);const camForward=new BABYLON.Vector3(Math.sin(camera.alpha),0,Math.cos(camera.alpha));const camRight=new BABYLON.Vector3(camForward.z,0,-camForward.x);moveVec.copyFrom(camForward).scaleInPlace(f).addInPlace(camRight.scale(s));moveVec.normalize();const speed=isRunning?5.8:3.15;playerRoot.position.addInPlace(moveVec.scale(speed*dt));playerRoot.position.x=BABYLON.Scalar.Clamp(playerRoot.position.x,-40,40);playerRoot.position.z=BABYLON.Scalar.Clamp(playerRoot.position.z,-35,40);playerRoot.rotation.y=Math.atan2(moveVec.x,moveVec.z);camera.target= BABYLON.Vector3.Lerp(camera.target,new BABYLON.Vector3(playerRoot.position.x,.9,playerRoot.position.z),Math.min(1,dt*4))}
+ if(modelReady&&animGroups.length){const desired=moving?(isRunning?runAnim:walkAnim):idleAnim;animGroups.forEach(a=>{if(a!==desired&&a.isPlaying)a.stop()});if(desired&&!desired.isPlaying)desired.start(true)}
+ if(!crystalFound&&BABYLON.Vector3.Distance(playerRoot.position,crystalRoot.position)<2.4){objective.textContent='◇ Cristal antigo: pressione “Despertar cristal”';}else if(!crystalFound){objective.textContent='◇ Cristal antigo: ainda não encontrado'}
+});
+engine.runRenderLoop(()=>scene.render());window.addEventListener('resize',()=>engine.resize());
+stateEl.textContent='criando cenário…';
+})();
+</script>
+</body>
+</html>

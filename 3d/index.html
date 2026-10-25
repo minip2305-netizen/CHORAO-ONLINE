@@ -67,9 +67,12 @@ const keys={};let joy={x:0,y:0};let moveVec=new BABYLON.Vector3(0,0,0);let lastT
 // Modelo humano real importado de amostra glTF com licença CC BY 4.0; protótipo, não o herói final.
 BABYLON.SceneLoader.ImportMeshAsync(null,'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CesiumMan/glTF-Binary/','CesiumMan.glb',scene).then(result=>{
  player=new BABYLON.TransformNode('modelo-jogador',scene);player.parent=playerRoot;
- result.meshes.forEach(m=>{if(m!==scene.meshes[0]){m.parent=player; m.receiveShadows=true;shadows.addShadowCaster(m)}});
- const bounds=result.meshes.filter(m=>m.getTotalVertices&&m.getTotalVertices()>0).map(m=>m.getBoundingInfo().boundingBox);
- if(bounds.length){let minY=Infinity,maxY=-Infinity;bounds.forEach(b=>{minY=Math.min(minY,b.minimumWorld.y);maxY=Math.max(maxY,b.maximumWorld.y)});const h=maxY-minY;if(h>0){player.scaling.setAll(2.05/h);player.position.y=-minY*2.05/h}}
+ // Preserva a hierarquia original do rig: reparentar cada malha separadamente pode quebrar as animações esqueléticas.
+ const importedRoot=result.meshes.find(m=>!m.parent)||result.meshes[0];
+ if(importedRoot) importedRoot.parent=player;
+ result.meshes.forEach(m=>{if(m.getTotalVertices&&m.getTotalVertices()>0){m.receiveShadows=true;shadows.addShadowCaster(m)}});
+ // Escala inicial conservadora; o modelo de teste é provisório e não representa o personagem final.
+ player.scaling.setAll(1.45);
  animGroups=result.animationGroups||[];
  if(animGroups.length){idleAnim=animGroups[0];idleAnim.start(true);walkAnim=animGroups.find(a=>/walk|run|step/i.test(a.name))||animGroups[0];runAnim=animGroups.find(a=>/run/i.test(a.name))||walkAnim}
  modelReady=true;stateEl.textContent='mundo carregado';noticeShow('O vale está pronto para explorar.','Use WASD ou as setas no computador. No celular, mova o controle virtual. Aproxime-se do cristal dourado.');setTimeout(()=>{if(notice.textContent.includes('O vale está pronto'))notice.hidden=true},5200);

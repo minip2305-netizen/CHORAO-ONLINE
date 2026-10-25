@@ -6,6 +6,15 @@
 - Não exigir que o jogador instale software.
 - Alvo inicial: uma região pequena, bonita e jogável; ampliar só depois de validar o visual, desempenho e multiplayer.
 
+## Fundação inicial do servidor multiplayer — branch de desenvolvimento
+
+Foi criada a branch `feature/multiplayer-server-foundation` com uma estrutura inicial em `server/`:
+- `package.json` e `tsconfig.json` para Node.js/TypeScript.
+- `src/index.ts` com uma sala Colyseus chamada `vale`, estado sincronizado de jogadores e limites básicos de coordenadas.
+- `README.md` com instruções de execução, limites e próximos passos.
+
+**Ainda não está integrado à página 3D nem hospedado.** O esqueleto não deve ser considerado testado ou pronto para exposição pública. Antes de integrar, é necessário instalar dependências, compilar, escrever testes, endurecer a validação do movimento e só então conectar o cliente. A branch separada preserva a versão publicada enquanto a infraestrutura é desenvolvida.
+
 ## Estado real do protótipo publicado — 25/10/2026
 
 A página `/3d/` já contém uma primeira fatia jogável local: cenário procedural, câmera de terceira pessoa, controles de teclado e toque, criatura hostil, ataque básico, pulso arcano, vida, vigor, XP, emblemas e missão do cristal. O progresso é salvo no `localStorage` do navegador/dispositivo.

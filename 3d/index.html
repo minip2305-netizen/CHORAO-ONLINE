@@ -117,7 +117,9 @@ scene.onBeforeRenderObservable.add(()=>{
  if(!crystalFound&&BABYLON.Vector3.Distance(playerRoot.position,crystalRoot.position)<2.4){objective.textContent='◇ Cristal antigo: pressione “Despertar cristal”';}else if(!crystalFound){objective.textContent='◇ Cristal antigo: ainda não encontrado'}
 });
 engine.runRenderLoop(()=>scene.render());window.addEventListener('resize',()=>engine.resize());
-stateEl.textContent='criando cenário…';
+// Mantém o estado real do carregamento: não sobrescrever o resultado da importação do personagem.
+window.addEventListener('error',e=>{console.error('Erro de execução no CHORÃO ONLINE:',e.error||e.message);if(stateEl.textContent!=='mundo carregado')stateEl.textContent='erro no mundo 3D';});
+window.addEventListener('unhandledrejection',e=>{console.error('Falha assíncrona no CHORÃO ONLINE:',e.reason);if(stateEl.textContent!=='mundo carregado')stateEl.textContent='falha ao carregar recurso';});
 })();
 </script>
 </body>

@@ -78,7 +78,18 @@ class ValeRoom extends Room<WorldState> {
 }
 
 const port = Number(process.env.PORT || 2567);
-const httpServer = createServer();
+const httpServer = createServer((request, response) => {
+  if (request.method === "GET" && request.url === "/health") {
+    response.writeHead(200, {
+      "content-type": "application/json; charset=utf-8",
+      "cache-control": "no-store"
+    });
+    response.end(JSON.stringify({ ok: true, service: "chorao-online-server" }));
+    return;
+  }
+  response.writeHead(404, { "content-type": "application/json; charset=utf-8" });
+  response.end(JSON.stringify({ error: "not_found" }));
+});
 const gameServer = new Server({
   transport: new WebSocketTransport({ server: httpServer })
 });

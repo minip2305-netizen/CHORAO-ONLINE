@@ -18,35 +18,47 @@ type MoveInput = {
   x?: number;
   z?: number;
   rotation?: number;
+  running?: boolean;
 };
 
 const WORLD_LIMIT = 40;
-const MAX_STEP = 1.5;
+const WALK_SPEED = 3.15;
+const RUN_SPEED = 5.8;
 
 class ValeRoom extends Room<WorldState> {
   maxClients = 8;
+  private inputs = new Map<string, MoveInput>();
 
   onCreate() {
     this.setState(new WorldState());
 
-    this.onMessage("move", (client: Client, input: MoveInput) => {
-      const player = this.state.players.get(client.sessionId);
-      if (!player || !input || typeof input !== "object") return;
-
+    // O cliente envia intenção de movimento, nunca uma posição final para o servidor aceitar.
+    this.onMessage("input", (client: Client, input: MoveInput) => {
+      if (!this.state.players.has(client.sessionId) || !input || typeof input !== "object") return;
       const x = Number(input.x);
       const z = Number(input.z);
       const rotation = Number(input.rotation);
       if (!Number.isFinite(x) || !Number.isFinite(z)) return;
-
-      // O servidor limita cada atualização para evitar teleporte por inputs inválidos.
-      const dx = Math.max(-MAX_STEP, Math.min(MAX_STEP, x - player.x));
-      const dz = Math.max(-MAX_STEP, Math.min(MAX_STEP, z - player.z));
-      player.x = Math.max(-WORLD_LIMIT, Math.min(WORLD_LIMIT, player.x + dx));
-      player.z = Math.max(-WORLD_LIMIT, Math.min(WORLD_LIMIT, player.z + dz));
-      if (Number.isFinite(rotation)) {
-        player.rotation = Math.max(-Math.PI * 4, Math.min(Math.PI * 4, rotation));
-      }
+      const length = Math.hypot(x, z) || 1;
+      this.inputs.set(client.sessionId, {
+        x: Math.max(-1, Math.min(1, x / length)),
+        z: Math.max(-1, Math.min(1, z / length)),
+        rotation: Number.isFinite(rotation) ? Math.max(-Math.PI * 4, Math.min(Math.PI * 4, rotation)) : undefined,
+        running: input.running === true
+      });
     });
+
+    this.setSimulationInterval((deltaTime) => {
+      const dt = Math.min(deltaTime / 1000, 0.1);
+      for (const [sessionId, input] of this.inputs) {
+        const player = this.state.players.get(sessionId);
+        if (!player) continue;
+        const speed = input.running ? RUN_SPEED : WALK_SPEED;
+        player.x = Math.max(-WORLD_LIMIT, Math.min(WORLD_LIMIT, player.x + (input.x || 0) * speed * dt));
+        player.z = Math.max(-WORLD_LIMIT, Math.min(WORLD_LIMIT, player.z + (input.z || 0) * speed * dt));
+        if (typeof input.rotation === "number") player.rotation = input.rotation;
+      }
+    }, 50);
   }
 
   onJoin(client: Client, options: { name?: string }) {
@@ -54,11 +66,13 @@ class ValeRoom extends Room<WorldState> {
     const requestedName = typeof options?.name === "string" ? options.name.trim() : "";
     player.name = requestedName.slice(0, 20) || "Viajante";
     this.state.players.set(client.sessionId, player);
+    this.inputs.set(client.sessionId, { x: 0, z: 0, running: false });
     console.info("[vale] jogador entrou", client.sessionId);
   }
 
   onLeave(client: Client) {
     this.state.players.delete(client.sessionId);
+    this.inputs.delete(client.sessionId);
     console.info("[vale] jogador saiu", client.sessionId);
   }
 }

@@ -105,7 +105,10 @@ joyEl.addEventListener('pointerup',joyEnd);joyEl.addEventListener('pointercancel
 let crystalTime=0;
 scene.onBeforeRenderObservable.add(()=>{
  const dt=Math.min(engine.getDeltaTime()/1000,.05),t=performance.now()/1000;
- crystalRoot.position.y=.8+Math.sin(t*1.4)*.13;crystalRoot.rotation.y+=dt*.28;ring.rotation.z+=dt*.18;\n // Animação procedural leve do guardião: respiração, balanço da cabeça e movimento mais vivo ao perseguir.\n enemyBody.position.y=.95+Math.sin(t*3.4)*.045;enemyHead.rotation.y=Math.sin(t*1.7)*.09;\n if(!enemyDefeated){const pursuitDistance=BABYLON.Vector3.Distance(enemyRoot.position,playerRoot.position);if(pursuitDistance<8&&pursuitDistance>1.45){enemyBody.position.y=.95+Math.abs(Math.sin(t*8))*.07;enemyRoot.rotation.z=Math.sin(t*8)*.025}else enemyRoot.rotation.z=Math.sin(t*1.6)*.012}
+ crystalRoot.position.y=.8+Math.sin(t*1.4)*.13;crystalRoot.rotation.y+=dt*.28;ring.rotation.z+=dt*.18;
+ // Animação procedural leve do guardião: respiração, balanço da cabeça e movimento mais vivo ao perseguir.
+ enemyBody.position.y=.95+Math.sin(t*3.4)*.045;enemyHead.rotation.y=Math.sin(t*1.7)*.09;
+ if(!enemyDefeated){const pursuitDistance=BABYLON.Vector3.Distance(enemyRoot.position,playerRoot.position);if(pursuitDistance<8&&pursuitDistance>1.45){enemyBody.position.y=.95+Math.abs(Math.sin(t*8))*.07;enemyRoot.rotation.z=Math.sin(t*8)*.025}else enemyRoot.rotation.z=Math.sin(t*1.6)*.012}
  const forward=(keys.w||keys.arrowup?1:0)-(keys.s||keys.arrowdown?1:0)-joy.y;
  const strafe=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0)+joy.x;
  const mag=Math.hypot(forward,strafe);let moving=mag>.12;const wantsRun=isRunning&&moving&&stamina>0;if(wantsRun)stamina=Math.max(0,stamina-25*dt);else stamina=Math.min(100,stamina+15*dt);if(stamina<=0&&isRunning){isRunning=false;document.getElementById("runBtn").textContent="⇧ Correr: desligado"}staminaBar.style.width=stamina+"%";staminaText.textContent=Math.round(stamina)+"%";

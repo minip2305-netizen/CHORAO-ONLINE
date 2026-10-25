@@ -73,19 +73,79 @@ shadows.addShadowCaster(enemyBody);shadows.addShadowCaster(enemyHead);
 
 let player=null,animGroups=[],walkAnim=null,idleAnim=null,runAnim=null,modelReady=false,isRunning=false;let stamina=100;let playerLevel=1,playerXP=0,guardianEmblems=0;const xpBar=document.getElementById("xpBar"),xpText=document.getElementById("xpText"),inventoryItems=document.getElementById("inventoryItems");let crystalFound=false;const SAVE_KEY="chorao-online-prototype-v1";function refreshXP(){xpBar.style.width=playerXP+"%";xpText.textContent="Nível "+playerLevel+" · "+playerXP+"/100 XP";}function refreshInventory(){inventoryItems.textContent=guardianEmblems>0?"🟠 Emblema da Mata ×"+guardianEmblems:"🎒 Bolsa vazia";}function saveProgress(){try{localStorage.setItem(SAVE_KEY,JSON.stringify({version:1,level:playerLevel,xp:playerXP,guardianEmblems,crystalFound}));}catch(e){console.warn("Salvamento local indisponível",e)}}try{const saved=JSON.parse(localStorage.getItem(SAVE_KEY)||"null");if(saved&&saved.version===1){playerLevel=Number.isInteger(saved.level)?Math.max(1,Math.min(999,saved.level)):1;playerXP=Number.isInteger(saved.xp)?Math.max(0,Math.min(99,saved.xp)):0;guardianEmblems=Number.isInteger(saved.guardianEmblems)?Math.max(0,Math.min(999999,saved.guardianEmblems)):0;crystalFound=saved.crystalFound===true;}}catch(e){console.warn("Não foi possível carregar progresso local",e)}refreshXP();refreshInventory();if(crystalFound){objective.textContent="✦ Cristal antigo: luz despertada!";gold.emissiveColor=new BABYLON.Color3(1,.72,.18);particles.emitRate=180;}function awardExperience(amount){playerXP+=amount;while(playerXP>=100){playerXP-=100;playerLevel++;}refreshXP();saveProgress();}function awardGuardianEmblem(){guardianEmblems++;refreshInventory();saveProgress();}let enemyHealth=100,enemyDefeated=false,enemyAttackCooldown=0,playerHealth=100,playerAttackReadyAt=0,arcaneReadyAt=0;const staminaBar=document.getElementById("staminaBar"),staminaText=document.getElementById("staminaText"),playerHealthBar=document.getElementById("playerHealthBar"),playerHealthText=document.getElementById("playerHealthText");
 const keys={};let joy={x:0,y:0};let moveVec=new BABYLON.Vector3(0,0,0);let lastTime=performance.now();let worldReady=false;
-// Modelo humano real importado de amostra glTF com licença CC BY 4.0; protótipo, não o herói final.
-BABYLON.SceneLoader.ImportMeshAsync(null,'https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/main/Models/CesiumMan/glTF-Binary/','CesiumMan.glb',scene).then(result=>{
- player=new BABYLON.TransformNode('modelo-jogador',scene);player.parent=playerRoot;
- // Preserva a hierarquia original do rig: reparentar cada malha separadamente pode quebrar as animações esqueléticas.
- const importedRoot=result.meshes.find(m=>!m.parent)||result.meshes[0];
- if(importedRoot) importedRoot.parent=player;
- result.meshes.forEach(m=>{if(m.getTotalVertices&&m.getTotalVertices()>0){m.receiveShadows=true;shadows.addShadowCaster(m)}});
- // Escala inicial conservadora; o modelo de teste é provisório e não representa o personagem final.
- player.scaling.setAll(1.45);
- animGroups=result.animationGroups||[];
- if(animGroups.length){idleAnim=animGroups[0];idleAnim.start(true);walkAnim=animGroups.find(a=>/walk|run|step/i.test(a.name))||animGroups[0];runAnim=animGroups.find(a=>/run/i.test(a.name))||walkAnim}
- modelReady=true;stateEl.textContent='mundo carregado';noticeShow('O vale está pronto para explorar.','Use WASD ou as setas no computador. No celular, mova o controle virtual. Aproxime-se do cristal dourado.');setTimeout(()=>{if(notice.textContent.includes('O vale está pronto'))notice.hidden=true},5200);
-}).catch(err=>{console.error('Falha ao carregar o modelo humano:',err);stateEl.textContent='erro ao carregar personagem';noticeShow('O cenário 3D foi carregado, mas o personagem externo não pôde ser baixado neste dispositivo. Verifique a conexão e recarregue a página.','O jogo não substituirá o personagem por uma caixa ou boneco improvisado.');});
+// Herói original construído com geometria 3D: rosto visível, armadura e espada.
+const armorMat=mat('aço azul da armadura','#263d55',.42),armorLight=mat('aço polido','#7894a8',.32),armorGold=mat('detalhes dourados','#d8ad58',.35),leatherMat=mat('couro escuro','#49342b'),clothMat=mat('tecido da capa','#7d2838'),skinMat=mat('pele do herói','#c98762'),hairMat=mat('cabelo castanho','#30231f'),eyeMat=mat('olhos do herói','#f2e6c9',.25),blackMat=mat('pupilas','#171c22',.2),mouthMat=mat('boca do herói','#5c2929');
+let heroLeftArm=null,heroRightArm=null,heroLeftLeg=null,heroRightLeg=null,heroCape=null,heroSword=null;
+function heroPiece(name,geometry,parent,material,position,scaling,rotation){
+ const mesh=geometry;mesh.name=name;mesh.parent=parent;if(material)mesh.material=material;
+ if(position)mesh.position.set(position[0],position[1],position[2]);if(scaling)mesh.scaling.set(scaling[0],scaling[1],scaling[2]);if(rotation)mesh.rotation.set(rotation[0],rotation[1],rotation[2]);
+ mesh.receiveShadows=true;shadows.addShadowCaster(mesh);return mesh;
+}
+function heroBox(name,parent,material,pos,size,rot=[0,0,0]){return heroPiece(name,BABYLON.MeshBuilder.CreateBox(name,{width:size[0],height:size[1],depth:size[2]},scene),parent,material,pos,[1,1,1],rot)}
+function heroSphere(name,parent,material,pos,size){return heroPiece(name,BABYLON.MeshBuilder.CreateSphere(name,{diameter:1,segments:12},scene),parent,material,pos,size)}
+function heroCapsule(name,parent,material,pos,height,radius,rot=[0,0,0]){return heroPiece(name,BABYLON.MeshBuilder.CreateCapsule(name,{height,radius,tessellation:10},scene),parent,material,pos,[1,1,1],rot)}
+function buildHero(){
+ player=new BABYLON.TransformNode('heroi-com-rosto-e-armadura',scene);player.parent=playerRoot;
+ // Botas, pernas articuladas e joelheiras.
+ heroLeftLeg=new BABYLON.TransformNode('perna-esquerda-articulada',scene);heroLeftLeg.parent=player;heroLeftLeg.position.set(-.19,.88,0);
+ heroRightLeg=new BABYLON.TransformNode('perna-direita-articulada',scene);heroRightLeg.parent=player;heroRightLeg.position.set(.19,.88,0);
+ for(const [side,pivot] of [['esquerda',heroLeftLeg],['direita',heroRightLeg]]){
+  heroCapsule('calca-'+side,pivot,leatherMat,[0,-.27,0],.7,.105);
+  heroCapsule('greva-de-aco-'+side,pivot,armorMat,[0,-.34,.035],.42,.115);
+  heroBox('joelheira-dourada-'+side,pivot,armorGold,[0,-.12,.105],[.19,.13,.07]);
+  heroBox('bota-blindada-'+side,pivot,armorMat,[0,-.62,.07],[.24,.16,.34]);
+  heroBox('sola-da-bota-'+side,pivot,leatherMat,[0,-.705,.09],[.25,.045,.35]);
+ }
+ // Tronco e peitoral em camadas, com detalhes dourados.
+ heroCapsule('tronco-do-heroi',player,leatherMat,[0,1.27,0],.78,.25);
+ heroBox('peitoral-principal',player,armorMat,[0,1.35,.015],[.62,.68,.32]);
+ heroBox('placa-central-peitoral',player,armorLight,[0,1.39,.19],[.27,.48,.045]);
+ heroBox('filete-dourado-peitoral',player,armorGold,[0,1.65,.218],[.48,.055,.035]);
+ heroBox('cinto-de-couro',player,leatherMat,[0,1.02,.01],[.57,.13,.34]);
+ heroBox('fivela-dourada',player,armorGold,[0,1.02,.195],[.12,.12,.035]);
+ heroBox('saia-de-armadura',player,armorMat,[0,.91,.02],[.55,.2,.32],[.08,0,0]);
+ heroBox('capa-vermelha',player,clothMat,[0,1.28,-.22],[.48,.72,.07],[.12,0,0]);
+ // Cabeça sem elmo fechado: o rosto permanece claramente visível.
+ heroSphere('rosto-do-heroi',player,skinMat,[0,1.99,.025],[.39,.46,.34]);
+ heroSphere('orelha-esquerda',player,skinMat,[-.205,1.99,.02],[.085,.13,.09]);
+ heroSphere('orelha-direita',player,skinMat,[.205,1.99,.02],[.085,.13,.09]);
+ heroSphere('cabelo',player,hairMat,[0,2.19,-.025],[.42,.2,.36]);
+ heroBox('franja',player,hairMat,[0,2.15,.16],[.3,.09,.08],[.05,0,0]);
+ for(const side of [-1,1]){
+  heroSphere('olho-'+side,player,eyeMat,[side*.083,2.035,.178],[.063,.055,.025]);
+  heroSphere('pupila-'+side,player,blackMat,[side*.083,2.035,.199],[.027,.034,.012]);
+  heroBox('sobrancelha-'+side,player,hairMat,[side*.083,2.09,.185],[.085,.025,.025],[0,0,side*-.08]);
+ }
+ heroPiece('nariz-do-heroi',BABYLON.MeshBuilder.CreateCylinder('nariz-do-heroi',{height:.09,diameterTop:.025,diameterBottom:.065,tessellation:8},scene),player,skinMat,[0,1.99,.205],[1,1,1],[Math.PI/2,0,0]);
+ heroBox('boca-do-heroi',player,mouthMat,[0,1.935,.183],[.085,.018,.018]);
+ // Elmo aberto: testa, proteção lateral e crista, sem esconder olhos ou boca.
+ heroBox('fronte-do-elmo',player,armorMat,[0,2.245,.075],[.39,.075,.31]);
+ heroBox('filete-dourado-do-elmo',player,armorGold,[0,2.205,.235],[.32,.025,.025]);
+ for(const side of [-1,1]){
+  heroBox('protecao-lateral-elmo-'+side,player,armorMat,[side*.19,2.01,.02],[.075,.29,.2]);
+  heroBox('rebite-dourado-elmo-'+side,player,armorGold,[side*.2,2.08,.13],[.035,.045,.035]);
+ }
+ heroPiece('crista-do-elmo',BABYLON.MeshBuilder.CreateCylinder('crista-do-elmo',{height:.22,diameterTop:.015,diameterBottom:.09,tessellation:6},scene),player,armorGold,[0,2.36,-.015],[1,1,1],[0,0,0]);
+ // Ombreiras, braços articulados, braçadeiras e luvas.
+ heroLeftArm=new BABYLON.TransformNode('braco-esquerdo-articulado',scene);heroLeftArm.parent=player;heroLeftArm.position.set(-.39,1.57,0);
+ heroRightArm=new BABYLON.TransformNode('braco-direito-articulado',scene);heroRightArm.parent=player;heroRightArm.position.set(.39,1.57,0);
+ for(const [side,pivot,sign] of [['esquerdo',heroLeftArm,-1],['direito',heroRightArm,1]]){
+  heroSphere('ombro-blindado-'+side,player,armorLight,[sign*.4,1.58,.01],[.27,.25,.29]);
+  heroBox('placa-ombro-'+side,player,armorMat,[sign*.42,1.62,.04],[.26,.13,.27],[0,0,sign*.12]);
+  heroCapsule('braco-'+side,pivot,leatherMat,[0,-.24,0],.5,.09);
+  heroCapsule('bracadeira-'+side,pivot,armorMat,[0,-.36,.035],.3,.105);
+  heroBox('filete-bracadeira-'+side,pivot,armorGold,[0,-.29,.12],[.17,.045,.035]);
+  heroSphere('luva-'+side,pivot,leatherMat,[0,-.52,.04],[.19,.17,.18]);
+ }
+ // Espada visível na mão direita, com guarda e cabo dourados.
+ heroSword=new BABYLON.TransformNode('espada-do-heroi',scene);heroSword.parent=heroRightArm;heroSword.position.set(.015,-.55,.12);heroSword.rotation.x=-.2;heroSword.rotation.z=-.15;
+ heroPiece('lamina-da-espada',BABYLON.MeshBuilder.CreateBox('lamina-da-espada',{width:.075,height:.68,depth:.025},scene),heroSword,armorLight,[0,-.39,.02],[1,1,1],[0,0,-.08]);
+ heroBox('guarda-da-espada',heroSword,armorGold,[0,-.06,.02],[.25,.055,.06]);
+ heroBox('punho-da-espada',heroSword,leatherMat,[0,.04,.02],[.07,.16,.07]);
+ heroSphere('gema-da-espada',heroSword,gold,[0,-.08,.06],[.07,.07,.035]);
+ modelReady=true;stateEl.textContent='herói equipado';noticeShow('Seu herói chegou ao Vale Esquecido!','Rosto visível, armadura de aço com detalhes dourados e espada equipada. Use WASD ou as setas no computador; no celular, mova o controle virtual.');setTimeout(()=>{if(notice.textContent.includes('Seu herói chegou'))notice.hidden=true},5200);
+}
+buildHero();
 function noticeShow(main,sub=''){notice.innerHTML='<div>'+main+'</div>'+(sub?'<div class="tiny">'+sub+'</div>':'')+'<div style="margin-top:12px"><button class="chip" id="closeNotice">Continuar</button></div>';notice.hidden=false;document.getElementById('closeNotice').onclick=()=>notice.hidden=true}
 document.getElementById('infoBtn').onclick=()=>noticeShow('Esta é a primeira fatia técnica 3D do CHORÃO ONLINE.','O personagem é uma amostra humana licenciada para validar carregamento e animações. Não é o herói final, não há multiplayer conectado nesta versão e o visual ainda está em desenvolvimento.');
 document.getElementById('runBtn').onclick=()=>{isRunning=!isRunning;document.getElementById('runBtn').textContent='⇧ Correr: '+(isRunning?'ligado':'desligado')};
@@ -123,7 +183,7 @@ scene.onBeforeRenderObservable.add(()=>{
  const strafe=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0)+joy.x;
  const mag=Math.hypot(forward,strafe);let moving=mag>.12;const wantsRun=isRunning&&moving&&stamina>0;if(wantsRun)stamina=Math.max(0,stamina-25*dt);else stamina=Math.min(100,stamina+15*dt);if(stamina<=0&&isRunning){isRunning=false;document.getElementById("runBtn").textContent="⇧ Correr: desligado"}staminaBar.style.width=stamina+"%";staminaText.textContent=Math.round(stamina)+"%";
  if(moving&&modelReady){const f=forward/(mag||1),s=strafe/(mag||1);const camForward=new BABYLON.Vector3(Math.sin(camera.alpha),0,Math.cos(camera.alpha));const camRight=new BABYLON.Vector3(camForward.z,0,-camForward.x);moveVec.copyFrom(camForward).scaleInPlace(f).addInPlace(camRight.scale(s));moveVec.normalize();const speed=wantsRun?5.8:3.15;playerRoot.position.addInPlace(moveVec.scale(speed*dt));playerRoot.position.x=BABYLON.Scalar.Clamp(playerRoot.position.x,-40,40);playerRoot.position.z=BABYLON.Scalar.Clamp(playerRoot.position.z,-35,40);playerRoot.rotation.y=Math.atan2(moveVec.x,moveVec.z);camera.target= BABYLON.Vector3.Lerp(camera.target,new BABYLON.Vector3(playerRoot.position.x,.9,playerRoot.position.z),Math.min(1,dt*4))}
- if(!enemyDefeated){const enemyDistance=BABYLON.Vector3.Distance(enemyRoot.position,playerRoot.position);if(enemyDistance<8&&enemyDistance>1.45){const dir=playerRoot.position.subtract(enemyRoot.position);dir.y=0;dir.normalize();enemyRoot.position.addInPlace(dir.scale(dt*1.05));enemyRoot.rotation.y=Math.atan2(dir.x,dir.z)}else if(enemyDistance<=1.45){enemyAttackCooldown-=dt;if(enemyAttackCooldown<=0){playerHealth=Math.max(0,playerHealth-5);playerHealthBar.style.width=playerHealth+"%";playerHealthText.textContent=playerHealth+"%";enemyAttackCooldown=1.5;if(playerHealth<=0){playerHealth=100;playerHealthBar.style.width="100%";playerHealthText.textContent="100%";playerRoot.position.set(0,0,4);noticeShow("Você foi derrubado!","O guardião recuperou a posição; sua vida foi restaurada nesta demonstração.")}}}}if(modelReady&&animGroups.length){const desired=moving?(wantsRun?runAnim:walkAnim):idleAnim;animGroups.forEach(a=>{if(a!==desired&&a.isPlaying)a.stop()});if(desired&&!desired.isPlaying)desired.start(true)}
+ if(!enemyDefeated){const enemyDistance=BABYLON.Vector3.Distance(enemyRoot.position,playerRoot.position);if(enemyDistance<8&&enemyDistance>1.45){const dir=playerRoot.position.subtract(enemyRoot.position);dir.y=0;dir.normalize();enemyRoot.position.addInPlace(dir.scale(dt*1.05));enemyRoot.rotation.y=Math.atan2(dir.x,dir.z)}else if(enemyDistance<=1.45){enemyAttackCooldown-=dt;if(enemyAttackCooldown<=0){playerHealth=Math.max(0,playerHealth-5);playerHealthBar.style.width=playerHealth+"%";playerHealthText.textContent=playerHealth+"%";enemyAttackCooldown=1.5;if(playerHealth<=0){playerHealth=100;playerHealthBar.style.width="100%";playerHealthText.textContent="100%";playerRoot.position.set(0,0,4);noticeShow("Você foi derrubado!","O guardião recuperou a posição; sua vida foi restaurada nesta demonstração.")}}}}if(modelReady){const gait=moving?(wantsRun?9:6):0;const swing=moving?Math.sin(t*gait)*.52:Math.sin(t*1.7)*.025;if(heroLeftArm)heroLeftArm.rotation.x=swing;if(heroRightArm)heroRightArm.rotation.x=-swing;if(heroLeftLeg)heroLeftLeg.rotation.x=-swing*.85;if(heroRightLeg)heroRightLeg.rotation.x=swing*.85;if(heroCape){heroCape.rotation.x=Math.sin(t*5)*.04}}
  if(!crystalFound&&BABYLON.Vector3.Distance(playerRoot.position,crystalRoot.position)<2.4){objective.textContent='◇ Cristal antigo: pressione “Despertar cristal”';}else if(!crystalFound){objective.textContent='◇ Cristal antigo: ainda não encontrado'}
 });
 engine.runRenderLoop(()=>scene.render());window.addEventListener('resize',()=>engine.resize());

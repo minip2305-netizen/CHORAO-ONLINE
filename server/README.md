@@ -24,7 +24,7 @@ npm run build
 npm start
 ```
 
-A sala inicial chama-se `vale`. Ela mantém os jogadores conectados e publica suas posições pelo estado sincronizado do Colyseus. A mensagem `move` aceita coordenadas-alvo e rotação, com limites por atualização e limites do mapa.
+A sala inicial chama-se `vale`. Ela mantém os jogadores conectados e publica suas posições pelo estado sincronizado do Colyseus. A mensagem `input` recebe intenção de movimento (eixos normalizados, rotação e indicação de corrida); o servidor simula o deslocamento a cada 50 ms, aplica velocidade de caminhada/corrida e limita a posição ao mapa. O cliente ainda não está integrado e esse controle inicial precisa de testes de abuso e sincronização.
 
 ## Estado e segurança
 

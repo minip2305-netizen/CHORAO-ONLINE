@@ -6,6 +6,19 @@
 - Não exigir que o jogador instale software.
 - Alvo inicial: uma região pequena, bonita e jogável; ampliar só depois de validar o visual, desempenho e multiplayer.
 
+## Estado real do protótipo publicado — 25/10/2026
+
+A página `/3d/` já contém uma primeira fatia jogável local: cenário procedural, câmera de terceira pessoa, controles de teclado e toque, criatura hostil, ataque básico, pulso arcano, vida, vigor, XP, emblemas e missão do cristal. O progresso é salvo no `localStorage` do navegador/dispositivo.
+
+Limites importantes, sem confundir protótipo com jogo concluído:
+- O personagem humano atual é o modelo de demonstração CesiumMan do repositório Khronos glTF Sample Assets, usado provisoriamente para validar importação/animação; não é o herói final.
+- O modelo depende de download externo. Se o recurso falhar, a página mostra um aviso; a execução visual completa ainda precisa ser validada em navegadores reais.
+- O salvamento é local ao navegador. Não sincroniza entre computador e celular.
+- Ainda não há servidor de jogo, salas compartilhadas, contas, banco de dados nem multiplayer real.
+- A publicação mais recente do GitHub Pages foi concluída com sucesso; isso confirma a publicação dos arquivos, não a validação de todos os recursos dentro do navegador.
+
+Próxima prioridade: validar carregamento do personagem e controles em desktop/celular, corrigir falhas observadas e só então iniciar o servidor multiplayer persistente.
+
 ## Arquitetura escolhida
 
 ### Cliente

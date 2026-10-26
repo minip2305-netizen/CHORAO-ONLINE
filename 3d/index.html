@@ -805,6 +805,668 @@
     window.addEventListener("resize", () => {
       engine.resize();
     });
+  </script><!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CHORÃO ONLINE — Prontera Field (Ragnarök)</title>
+  
+  <script src="https://cdn.babylonjs.com/babylon.js"></script>
+  <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+  <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #0a0e14;
+      font-family: 'Inter', sans-serif;
+      color: #fff;
+    }
+    #renderCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+    }
+
+    .rag-panel {
+      background: linear-gradient(180deg, rgba(30, 41, 59, 0.94) 0%, rgba(15, 23, 42, 0.96) 100%);
+      border: 2px solid #64748b;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+      position: absolute;
+      z-index: 10;
+    }
+
+    #player-hud {
+      top: 14px;
+      left: 14px;
+      padding: 12px 16px;
+      min-width: 260px;
+    }
+    .char-title {
+      font-family: 'Cinzel', serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffd166;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+    .char-level {
+      background: #e63946;
+      color: #fff;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 800;
+    }
+    .bar-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .bar-label {
+      width: 32px;
+      font-size: 10px;
+      color: #cbd5e1;
+    }
+    .bar-track {
+      flex: 1;
+      height: 10px;
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 5px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .bar-fill {
+      height: 100%;
+      transition: width 0.2s ease;
+    }
+    .bar-fill-hp { background: linear-gradient(90deg, #e63946, #ff758f); }
+    .bar-fill-sp { background: linear-gradient(90deg, #1d4ed8, #60a5fa); }
+    .bar-fill-exp { background: linear-gradient(90deg, #059669, #34d399); }
+
+    #status-hud {
+      top: 14px;
+      right: 14px;
+      padding: 10px 14px;
+      text-align: right;
+      font-size: 12px;
+    }
+    .zeny-box {
+      font-weight: 800;
+      color: #fbbf24;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    #target-hud {
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 20px;
+      display: none;
+      min-width: 240px;
+      text-align: center;
+    }
+    #target-name {
+      font-weight: 800;
+      font-size: 13px;
+      color: #ff758f;
+      margin-bottom: 4px;
+    }
+
+    #combat-log {
+      position: absolute;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      z-index: 10;
+    }
+    .log-item {
+      font-family: 'Cinzel', serif;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: rgba(0, 0, 0, 0.75);
+      border: 1px solid rgba(255,255,255,0.2);
+      animation: fadeUp 1.8s forwards;
+    }
+    @keyframes fadeUp {
+      0% { opacity: 0; transform: translateY(10px); }
+      15% { opacity: 1; transform: translateY(0); }
+      80% { opacity: 1; }
+      100% { opacity: 0; transform: translateY(-20px); }
+    }
+
+    #bottom-bar {
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      padding: 8px 12px;
+      z-index: 10;
+    }
+    .hud-btn {
+      background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+      color: #fff;
+      border: 1px solid #64748b;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .hud-btn:hover {
+      background: #475569;
+      border-color: #94a3b8;
+      transform: translateY(-2px);
+    }
+
+    #click-tip {
+      position: absolute;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      color: rgba(255,255,255,0.85);
+      background: rgba(0,0,0,0.65);
+      padding: 4px 12px;
+      border-radius: 12px;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <canvas id="renderCanvas"></canvas>
+
+  <div id="player-hud" class="rag-panel">
+    <div class="char-title">
+      <span>Novato Chorão</span>
+      <span class="char-level" id="player-lvl">Base Lv. 1</span>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label">HP</span>
+      <div class="bar-track">
+        <div id="hp-bar" class="bar-fill bar-fill-hp" style="width: 100%;"></div>
+      </div>
+      <span style="margin-left: 8px; font-size: 10px;" id="hp-text">250/250</span>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label">SP</span>
+      <div class="bar-track">
+        <div id="sp-bar" class="bar-fill bar-fill-sp" style="width: 100%;"></div>
+      </div>
+      <span style="margin-left: 8px; font-size: 10px;" id="sp-text">60/60</span>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label">EXP</span>
+      <div class="bar-track">
+        <div id="exp-bar" class="bar-fill bar-fill-exp" style="width: 0%;"></div>
+      </div>
+      <span style="margin-left: 8px; font-size: 10px;" id="exp-text">0%</span>
+    </div>
+  </div>
+
+  <div id="target-hud" class="rag-panel">
+    <div id="target-name">Poring [Nv. 1]</div>
+    <div class="bar-track" style="height: 8px;">
+      <div id="target-hp-bar" class="bar-fill bar-fill-hp" style="width: 100%;"></div>
+    </div>
+  </div>
+
+  <div id="status-hud" class="rag-panel">
+    <div class="zeny-box">
+      <span>🪙</span> <span id="zeny-val">150</span> Zeny
+    </div>
+    <div class="inventory-pills" id="drops-count" style="font-size: 11px; color: #94a3b8;">
+      Gelatinas: 0 | Maçãs: 0
+    </div>
+  </div>
+
+  <div id="combat-log"></div>
+
+  <div id="click-tip">
+    🖱️ Clique no Poring rosa para travar a mira e atacar | Clique no chão ou WASD para andar
+  </div>
+
+  <div id="bottom-bar" class="rag-panel">
+    <button class="hud-btn" id="btn-attack">⚔️ Atacar Alvo</button>
+    <button class="hud-btn" id="btn-bash">💥 Golpe Fulminante (10 SP)</button>
+    <button class="hud-btn" id="btn-respawn">✨ Respawn 15 Porings</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById("renderCanvas");
+    const engine = new BABYLON.Engine(canvas, true);
+
+    const playerState = {
+      lvl: 1,
+      hp: 250,
+      maxHp: 250,
+      sp: 60,
+      maxSp: 60,
+      exp: 0,
+      expNext: 100,
+      zeny: 150,
+      jellopy: 0,
+      apple: 0,
+      targetEnemy: null
+    };
+
+    function showLog(text, color = "#ffd166") {
+      const log = document.getElementById("combat-log");
+      const item = document.createElement("div");
+      item.className = "log-item";
+      item.style.color = color;
+      item.innerText = text;
+      log.appendChild(item);
+      setTimeout(() => item.remove(), 1800);
+    }
+
+    function updateUI() {
+      document.getElementById("hp-bar").style.width = `${(playerState.hp / playerState.maxHp) * 100}%`;
+      document.getElementById("hp-text").innerText = `${playerState.hp}/${playerState.maxHp}`;
+      
+      document.getElementById("sp-bar").style.width = `${(playerState.sp / playerState.maxSp) * 100}%`;
+      document.getElementById("sp-text").innerText = `${playerState.sp}/${playerState.maxSp}`;
+      
+      const expPct = Math.floor((playerState.exp / playerState.expNext) * 100);
+      document.getElementById("exp-bar").style.width = `${expPct}%`;
+      document.getElementById("exp-text").innerText = `${expPct}%`;
+      
+      document.getElementById("player-lvl").innerText = `Base Lv. ${playerState.lvl}`;
+      document.getElementById("zeny-val").innerText = playerState.zeny;
+      document.getElementById("drops-count").innerText = `Gelatinas: ${playerState.jellopy} | Maçãs: ${playerState.apple}`;
+
+      const targetHud = document.getElementById("target-hud");
+      if (playerState.targetEnemy && !playerState.targetEnemy.isDead) {
+        targetHud.style.display = "block";
+        document.getElementById("target-name").innerText = `${playerState.targetEnemy.name} [Nv. ${playerState.targetEnemy.lvl}]`;
+        const tHpPct = (playerState.targetEnemy.hp / playerState.targetEnemy.maxHp) * 100;
+        document.getElementById("target-hp-bar").style.width = `${Math.max(0, tHpPct)}%`;
+      } else {
+        targetHud.style.display = "none";
+      }
+    }
+
+    const createScene = function() {
+      const scene = new BABYLON.Scene(engine);
+      scene.clearColor = new BABYLON.Color4(0.55, 0.78, 0.95, 1);
+      scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
+      scene.fogDensity = 0.005;
+      scene.fogColor = new BABYLON.Color3(0.65, 0.82, 0.96);
+
+      const camera = new BABYLON.ArcRotateCamera("Camera", -Math.PI / 2, Math.PI / 3, 24, new BABYLON.Vector3(0, 1.5, 0), scene);
+      camera.attachControl(canvas, true);
+      camera.lowerRadiusLimit = 10;
+      camera.upperRadiusLimit = 40;
+      camera.upperBetaLimit = Math.PI / 2.2;
+
+      const sun = new BABYLON.DirectionalLight("sun", new BABYLON.Vector3(-0.6, -1, 0.5), scene);
+      sun.intensity = 1.6;
+
+      const hemi = new BABYLON.HemisphericLight("hemi", new BABYLON.Vector3(0, 1, 0), scene);
+      hemi.intensity = 0.85;
+
+      const shadowGen = new BABYLON.ShadowGenerator(1024, sun);
+      shadowGen.useBlurExponentialShadowMap = true;
+
+      // Terreno sólido e garantido
+      const ground = BABYLON.MeshBuilder.CreateGround("ground", { width: 180, height: 180, subdivisions: 32 }, scene);
+      const groundMat = new BABYLON.StandardMaterial("groundMat", scene);
+      groundMat.diffuseTexture = new BABYLON.Texture("https://playground.babylonjs.com/textures/grass.png", scene);
+      groundMat.diffuseTexture.uScale = 20;
+      groundMat.diffuseTexture.vScale = 20;
+      ground.material = groundMat;
+      ground.receiveShadows = true;
+
+      // Retículo de clique
+      const clickMarker = BABYLON.MeshBuilder.CreateTorus("clickMarker", { diameter: 1.4, thickness: 0.1 }, scene);
+      const markerMat = new BABYLON.StandardMaterial("markerMat", scene);
+      markerMat.emissiveColor = new BABYLON.Color3(0.2, 1, 0.4);
+      clickMarker.material = markerMat;
+      clickMarker.isVisible = false;
+
+      // Herói Aventureiro
+      const hero = new BABYLON.TransformNode("hero", scene);
+      hero.position = new BABYLON.Vector3(0, 0, 0);
+
+      const heroBody = BABYLON.MeshBuilder.CreateCylinder("heroBody", { height: 1.4, diameterTop: 0.6, diameterBottom: 0.8 }, scene);
+      heroBody.position.y = 0.9;
+      const bodyMat = new BABYLON.StandardMaterial("bodyMat", scene);
+      bodyMat.diffuseColor = new BABYLON.Color3(0.2, 0.45, 0.9);
+      heroBody.material = bodyMat;
+      heroBody.parent = hero;
+      shadowGen.addShadowCaster(heroBody);
+
+      const heroHead = BABYLON.MeshBuilder.CreateSphere("heroHead", { diameter: 0.8 }, scene);
+      heroHead.position.y = 1.85;
+      const skinMat = new BABYLON.StandardMaterial("skinMat", scene);
+      skinMat.diffuseColor = new BABYLON.Color3(1, 0.82, 0.7);
+      heroHead.material = skinMat;
+      heroHead.parent = hero;
+      shadowGen.addShadowCaster(heroHead);
+
+      const sword = BABYLON.MeshBuilder.CreateBox("sword", { width: 0.12, height: 1.1, depth: 0.05 }, scene);
+      sword.position = new BABYLON.Vector3(0.55, 1.1, 0.3);
+      sword.rotation.z = -Math.PI / 4;
+      const swordMat = new BABYLON.StandardMaterial("swordMat", scene);
+      swordMat.diffuseColor = new BABYLON.Color3(0.9, 0.9, 0.95);
+      sword.material = swordMat;
+      sword.parent = hero;
+      shadowGen.addShadowCaster(sword);
+
+      // Porings com materiais chamativos
+      const poringMat = new BABYLON.StandardMaterial("poringMat", scene);
+      poringMat.diffuseColor = new BABYLON.Color3(1, 0.35, 0.55);
+      poringMat.emissiveColor = new BABYLON.Color3(0.35, 0.05, 0.15);
+
+      const eyeMat = new BABYLON.StandardMaterial("eyeMat", scene);
+      eyeMat.diffuseColor = new BABYLON.Color3(0, 0, 0);
+
+      const enemies = [];
+
+      function createPoring(x, z, name = "Poring", lvl = 1, hp = 50) {
+        const root = new BABYLON.TransformNode("poring_root", scene);
+        root.position = new BABYLON.Vector3(x, 0, z);
+
+        // Gosminha bem visível
+        const blob = BABYLON.MeshBuilder.CreateSphere("blob", { diameterX: 1.4, diameterY: 1.1, diameterZ: 1.3 }, scene);
+        blob.position.y = 0.65;
+        blob.material = poringMat;
+        blob.parent = root;
+        shadowGen.addShadowCaster(blob);
+
+        // Olhos
+        const eyeL = BABYLON.MeshBuilder.CreateSphere("eyeL", { diameter: 0.18 }, scene);
+        eyeL.position = new BABYLON.Vector3(-0.3, 0.8, 0.58);
+        eyeL.material = eyeMat;
+        eyeL.parent = root;
+
+        const eyeR = BABYLON.MeshBuilder.CreateSphere("eyeR", { diameter: 0.18 }, scene);
+        eyeR.position = new BABYLON.Vector3(0.3, 0.8, 0.58);
+        eyeR.material = eyeMat;
+        eyeR.parent = root;
+
+        const enemyData = {
+          name,
+          lvl,
+          hp,
+          maxHp: hp,
+          root,
+          blob,
+          isDead: false,
+          bounceOffset: Math.random() * 5
+        };
+
+        blob.actionManager = new BABYLON.ActionManager(scene);
+        blob.actionManager.registerAction(
+          new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, function () {
+            selectTarget(enemyData);
+          })
+        );
+
+        enemies.push(enemyData);
+        return enemyData;
+      }
+
+      function spawnFieldPorings() {
+        enemies.forEach(e => { if (e.root) e.root.dispose(); });
+        enemies.length = 0;
+
+        // Cria 1 perto do jogador para testar na hora!
+        createPoring(3, 3, "Poring", 1, 50);
+
+        // E outros 14 espalhados
+        for (let i = 0; i < 14; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const dist = 6 + Math.random() * 30;
+          createPoring(Math.cos(angle) * dist, Math.sin(angle) * dist, "Poring", 1, 50);
+        }
+      }
+      spawnFieldPorings();
+
+      // Dano Flutuante
+      function showDamageNumber(pos, amount, isCrit = false) {
+        const textPlane = BABYLON.MeshBuilder.CreatePlane("dmgText", { width: 3, height: 1.5 }, scene);
+        textPlane.position = pos.clone().add(new BABYLON.Vector3(0, 1.8, 0));
+        textPlane.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+
+        const advTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateForMesh(textPlane);
+        const textBlock = new BABYLON.GUI.TextBlock();
+        textBlock.text = `${amount}`;
+        textBlock.color = isCrit ? "#ffea00" : "#ffffff";
+        textBlock.fontSize = isCrit ? 60 : 44;
+        textBlock.fontFamily = "'Cinzel', sans-serif";
+        textBlock.fontWeight = "bold";
+        textBlock.outlineWidth = 5;
+        textBlock.outlineColor = isCrit ? "#d90429" : "#000000";
+        advTexture.addControl(textBlock);
+
+        let elapsed = 0;
+        const obs = scene.onBeforeRenderObservable.add(() => {
+          elapsed += 0.03;
+          textPlane.position.y += 0.04;
+          if (elapsed > 1.0) {
+            scene.onBeforeRenderObservable.remove(obs);
+            textPlane.dispose();
+          }
+        });
+      }
+
+      function spawnDrop(pos) {
+        const isApple = Math.random() > 0.6;
+        const dropMesh = BABYLON.MeshBuilder.CreateSphere("dropItem", { diameter: 0.4 }, scene);
+        dropMesh.position = pos.clone().add(new BABYLON.Vector3(0, 0.4, 0));
+        
+        const dropMat = new BABYLON.StandardMaterial("dropMat", scene);
+        dropMat.diffuseColor = isApple ? new BABYLON.Color3(0.9, 0.1, 0.1) : new BABYLON.Color3(0.2, 0.7, 0.9);
+        dropMesh.material = dropMat;
+
+        showLog(`Drop: ${isApple ? "🍎 Maçã" : "💧 Gelatina de Poring"}!`, "#70e000");
+
+        const checkCollect = scene.onBeforeRenderObservable.add(() => {
+          const dist = BABYLON.Vector3.Distance(hero.position, dropMesh.position);
+          if (dist < 2.0) {
+            if (isApple) {
+              playerState.apple++;
+              playerState.hp = Math.min(playerState.maxHp, playerState.hp + 30);
+              showLog("+30 HP restaurado com Maçã!", "#38b000");
+            } else {
+              playerState.jellopy++;
+              playerState.zeny += 18;
+              showLog("+18 Zeny obtido!", "#ffbe0b");
+            }
+            updateUI();
+            scene.onBeforeRenderObservable.remove(checkCollect);
+            dropMesh.dispose();
+          }
+        });
+      }
+
+      function selectTarget(enemy) {
+        if (enemy.isDead) return;
+        playerState.targetEnemy = enemy;
+        updateUI();
+        showLog(`Alvo travado: ${enemy.name}!`, "#ff758f");
+      }
+
+      function executeAttack(damageBonus = 0, isBash = false) {
+        const enemy = playerState.targetEnemy;
+        if (!enemy || enemy.isDead) {
+          showLog("Clique em um Poring primeiro!", "#cbd5e1");
+          return;
+        }
+
+        const dist = BABYLON.Vector3.Distance(hero.position, enemy.root.position);
+        if (dist > 3.0) {
+          targetDestination = enemy.root.position.clone();
+          showLog("Correndo até o alvo...", "#94a3b8");
+          return;
+        }
+
+        // Golpe
+        const swing = new BABYLON.Animation("swordSwing", "rotation.x", 30, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+        swing.setKeys([
+          { frame: 0, value: 0 },
+          { frame: 5, value: Math.PI / 2 },
+          { frame: 10, value: 0 }
+        ]);
+        sword.animations = [swing];
+        scene.beginAnimation(sword, 0, 10, false);
+
+        const baseDmg = Math.floor(18 + Math.random() * 12);
+        const totalDmg = baseDmg + damageBonus;
+        enemy.hp -= totalDmg;
+
+        showDamageNumber(enemy.root.position, totalDmg, isBash);
+
+        if (enemy.hp <= 0) {
+          enemy.isDead = true;
+          enemy.root.dispose();
+          playerState.targetEnemy = null;
+
+          playerState.exp += 25;
+          playerState.zeny += 12;
+          showLog(`Poring derrotado! +25 EXP | +12 Zeny`, "#ffd166");
+
+          if (playerState.exp >= playerState.expNext) {
+            playerState.lvl++;
+            playerState.exp -= playerState.expNext;
+            playerState.expNext = Math.floor(playerState.expNext * 1.5);
+            playerState.maxHp += 40;
+            playerState.hp = playerState.maxHp;
+            showLog(`✨ LEVEL UP! Você é Nível ${playerState.lvl}!`, "#ffea00");
+          }
+
+          spawnDrop(enemy.root.position);
+        }
+
+        updateUI();
+      }
+
+      document.getElementById("btn-attack").onclick = () => executeAttack(0, false);
+      
+      document.getElementById("btn-bash").onclick = () => {
+        if (playerState.sp < 10) {
+          showLog("SP insuficiente!", "#ef4444");
+          return;
+        }
+        playerState.sp -= 10;
+        executeAttack(35, true);
+      };
+
+      document.getElementById("btn-respawn").onclick = () => {
+        spawnFieldPorings();
+        showLog("15 Porings renasceram!", "#38b000");
+      };
+
+      // Movimentação
+      let targetDestination = null;
+      const inputMap = {};
+
+      window.addEventListener("keydown", (evt) => { inputMap[evt.key.toLowerCase()] = true; });
+      window.addEventListener("keyup", (evt) => { inputMap[evt.key.toLowerCase()] = false; });
+
+      scene.onPointerDown = function(evt, pickResult) {
+        if (evt.button === 0 && pickResult.hit && pickResult.pickedMesh === ground) {
+          targetDestination = pickResult.pickedPoint.clone();
+          targetDestination.y = 0;
+          clickMarker.position = targetDestination.clone().add(new BABYLON.Vector3(0, 0.1, 0));
+          clickMarker.isVisible = true;
+        }
+      };
+
+      let timer = 0;
+      scene.onBeforeRenderObservable.add(() => {
+        timer += 0.05;
+
+        // Pulos dos Porings
+        enemies.forEach(enemy => {
+          if (enemy.isDead) return;
+          const bounce = Math.abs(Math.sin(timer * 4 + enemy.bounceOffset));
+          enemy.blob.position.y = 0.65 + bounce * 0.45;
+          enemy.blob.scaling.y = 1 - bounce * 0.2;
+          enemy.blob.scaling.x = 1 + bounce * 0.12;
+          enemy.blob.scaling.z = 1 + bounce * 0.12;
+        });
+
+        // Movimento teclado
+        let moved = false;
+        const moveVec = new BABYLON.Vector3(0, 0, 0);
+
+        if (inputMap["w"] || inputMap["arrowup"]) { moveVec.z += 1; moved = true; }
+        if (inputMap["s"] || inputMap["arrowdown"]) { moveVec.z -= 1; moved = true; }
+        if (inputMap["a"] || inputMap["arrowleft"]) { moveVec.x -= 1; moved = true; }
+        if (inputMap["d"] || inputMap["arrowright"]) { moveVec.x += 1; moved = true; }
+
+        if (moved) {
+          targetDestination = null;
+          clickMarker.isVisible = false;
+          moveVec.normalize();
+          hero.position.addInPlace(moveVec.scale(0.35));
+          hero.rotation.y = Math.atan2(moveVec.x, moveVec.z);
+        } else if (targetDestination) {
+          const diff = targetDestination.subtract(hero.position);
+          diff.y = 0;
+          if (diff.length() > 0.4) {
+            diff.normalize();
+            hero.position.addInPlace(diff.scale(0.35));
+            hero.rotation.y = Math.atan2(diff.x, diff.z);
+          } else {
+            targetDestination = null;
+            clickMarker.isVisible = false;
+          }
+        }
+
+        camera.target = BABYLON.Vector3.Lerp(camera.target, hero.position.clone().add(new BABYLON.Vector3(0, 1.2, 0)), 0.1);
+      });
+
+      return scene;
+    };
+
+    const scene = createScene();
+    updateUI();
+
+    engine.runRenderLoop(() => { scene.render(); });
+    window.addEventListener("resize", () => { engine.resize(); });
   </script>
+</body>
+</html>
+
 </body>
 </html>

@@ -1,337 +1,810 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#101b2c">
-<title>CHORÃO ONLINE — Vale Esquecido 3D</title>
-<style>
-:root{color-scheme:dark;--gold:#e8c77b;--glass:rgba(9,18,28,.82);--line:rgba(232,199,123,.4)}
-*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#0d1624;color:#f4f0df;font-family:Inter,system-ui,Segoe UI,sans-serif;touch-action:none}
-#renderCanvas{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none}
-.hud{position:fixed;z-index:2;pointer-events:none}
-.top{top:14px;left:14px;right:14px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
-.brand,.panel{background:linear-gradient(135deg,rgba(10,20,30,.92),rgba(18,34,43,.8));border:1px solid var(--line);box-shadow:0 12px 35px #0007;backdrop-filter:blur(14px);border-radius:14px}
-.brand{padding:12px 16px;max-width:min(420px,68vw)}.brand strong{display:block;letter-spacing:.16em;font-size:12px;color:var(--gold)}.brand span{display:block;font-size:11px;color:#d4d5c9;margin-top:4px}
-.status{padding:10px 13px;min-width:170px;text-align:right;font-size:11px;line-height:1.6;color:#d6e4d8}.status b{color:#9ed5a8}
-.quest{left:14px;top:112px;width:min(280px,64vw);padding:14px 15px}.eyebrow{color:var(--gold);font-size:10px;letter-spacing:.15em;text-transform:uppercase}.quest h2{font-size:15px;margin:6px 0 7px;font-weight:650}.quest p{font-size:12px;line-height:1.55;color:#c7d1ca;margin:0}.objective{margin-top:10px;padding-top:9px;border-top:1px solid #ffffff17;font-size:11px;color:#e7d8ad}.enemy-status{margin-top:12px;padding-top:9px;border-top:1px solid #ffffff17}.enemy-status .vital-track div{background:linear-gradient(90deg,#b44d46,#e8a26b)}.vitals{margin-top:12px}.vital-label{display:flex;justify-content:space-between;font-size:9px;letter-spacing:.12em;color:#c8d4cb;margin-bottom:5px}.vital-label b{color:#e8c77b}.vital-track{height:6px;border-radius:8px;background:#ffffff20;overflow:hidden}.vital-track div{height:100%;width:100%;border-radius:8px;background:linear-gradient(90deg,#72b77c,#e8c77b);transition:width .12s}
-.bottom{bottom:14px;left:50%;transform:translateX(-50%);display:flex;gap:8px;align-items:center;justify-content:center;width:calc(100% - 28px);flex-wrap:wrap}
-.chip{pointer-events:auto;cursor:pointer;border:1px solid var(--line);border-radius:11px;padding:10px 13px;background:var(--glass);color:#f4f0df;font-size:12px;backdrop-filter:blur(8px);box-shadow:0 8px 20px #0004}.chip:active{transform:translateY(1px)}.chip.primary{background:linear-gradient(135deg,#8c6b36,#4d633e);border-color:#d5b96b}.help{position:fixed;right:14px;bottom:76px;max-width:250px;padding:10px 12px;font-size:11px;line-height:1.55;color:#d8dfd8}
-#joystick{display:none;position:fixed;left:22px;bottom:88px;width:112px;height:112px;border-radius:50%;border:1px solid #e8c77b88;background:#08152288;z-index:4;touch-action:none}
-#stick{position:absolute;left:34px;top:34px;width:42px;height:42px;border-radius:50%;background:#e8c77bcc;border:1px solid #fff9;box-shadow:0 0 20px #e8c77b55}
-#notice{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:5;background:#0a1422fa;border:1px solid var(--line);border-radius:14px;padding:18px 20px;max-width:min(420px,88vw);font-size:13px;line-height:1.6;text-align:center;box-shadow:0 20px 70px #000b}
-#notice[hidden]{display:none}.tiny{font-size:10px;color:#aab8b0;margin-top:8px}
-@media(max-width:600px){.top{top:8px;left:8px;right:8px}.brand{padding:10px 11px}.brand strong{font-size:10px}.brand span{font-size:10px}.status{min-width:110px;padding:8px;font-size:10px}.quest{top:84px;left:8px;padding:10px;width:200px}.quest h2{font-size:13px}.quest p{font-size:10px}.objective{font-size:10px}.help{right:8px;bottom:74px;max-width:155px;font-size:10px}.bottom{bottom:8px;gap:5px}.chip{padding:9px 10px;font-size:11px}#joystick{display:block}}
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CHORÃO ONLINE — Prontera Field (Estilo Ragnarök)</title>
+  
+  <script src="https://cdn.babylonjs.com/babylon.js"></script>
+  <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+  <script src="https://cdn.babylonjs.com/gui/babylon.gui.min.js"></script>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Inter:wght@400;600;700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #0a0e14;
+      font-family: 'Inter', sans-serif;
+      color: #fff;
+    }
+    #renderCanvas {
+      width: 100%;
+      height: 100%;
+      display: block;
+      touch-action: none;
+    }
+
+    /* HUD Retrô Ragnarök */
+    .rag-panel {
+      background: linear-gradient(180deg, rgba(35, 46, 68, 0.92) 0%, rgba(18, 24, 38, 0.96) 100%);
+      border: 2px solid #5a759e;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.2);
+      backdrop-filter: blur(6px);
+      position: absolute;
+      z-index: 10;
+    }
+
+    /* Painel do Topo Esquerdo: Info Jogador */
+    #player-hud {
+      top: 14px;
+      left: 14px;
+      padding: 12px 16px;
+      min-width: 260px;
+    }
+    .char-title {
+      font-family: 'Cinzel', serif;
+      font-size: 14px;
+      font-weight: 700;
+      color: #ffd166;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+      padding-bottom: 4px;
+    }
+    .char-level {
+      background: #e63946;
+      color: #fff;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 800;
+    }
+    .bar-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 5px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    .bar-label {
+      width: 32px;
+      font-size: 10px;
+      color: #cbd5e1;
+    }
+    .bar-track {
+      flex: 1;
+      height: 10px;
+      background: rgba(0, 0, 0, 0.6);
+      border-radius: 5px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.15);
+      position: relative;
+    }
+    .bar-fill {
+      height: 100%;
+      transition: width 0.2s ease;
+    }
+    .bar-fill-hp { background: linear-gradient(90deg, #e63946, #ff758f); }
+    .bar-fill-sp { background: linear-gradient(90deg, #1d4ed8, #60a5fa); }
+    .bar-fill-exp { background: linear-gradient(90deg, #059669, #34d399); }
+
+    /* Topo Direito: Zeny e Inventário */
+    #status-hud {
+      top: 14px;
+      right: 14px;
+      padding: 10px 14px;
+      text-align: right;
+      font-size: 12px;
+    }
+    .zeny-box {
+      font-weight: 800;
+      color: #fbbf24;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+    .inventory-pills {
+      font-size: 11px;
+      color: #94a3b8;
+    }
+
+    /* Caixa de Notificação Central (Dano / Drop) */
+    #combat-log {
+      position: absolute;
+      bottom: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      z-index: 10;
+    }
+    .log-item {
+      font-family: 'Cinzel', serif;
+      font-size: 13px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: rgba(0, 0, 0, 0.75);
+      border: 1px solid rgba(255,255,255,0.2);
+      animation: fadeUp 1.8s forwards;
+    }
+    @keyframes fadeUp {
+      0% { opacity: 0; transform: translateY(10px); }
+      15% { opacity: 1; transform: translateY(0); }
+      80% { opacity: 1; }
+      100% { opacity: 0; transform: translateY(-20px); }
+    }
+
+    /* Barra Inferior com Controles */
+    #bottom-bar {
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      padding: 8px 12px;
+      z-index: 10;
+    }
+    .hud-btn {
+      background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+      color: #fff;
+      border: 1px solid #64748b;
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s;
+    }
+    .hud-btn:hover {
+      background: #475569;
+      border-color: #94a3b8;
+      transform: translateY(-2px);
+    }
+    .hud-btn:active {
+      transform: translateY(0);
+    }
+
+    /* Alvo Atual (Monstro selecionado) */
+    #target-hud {
+      top: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 10px 20px;
+      display: none;
+      min-width: 240px;
+      text-align: center;
+    }
+    #target-name {
+      font-weight: 800;
+      font-size: 13px;
+      color: #ff758f;
+      margin-bottom: 4px;
+    }
+
+    /* Dica Flutuante */
+    #click-tip {
+      position: absolute;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      color: rgba(255,255,255,0.7);
+      background: rgba(0,0,0,0.5);
+      padding: 4px 10px;
+      border-radius: 12px;
+      pointer-events: none;
+    }
+  </style>
 </head>
 <body>
-<canvas id="renderCanvas" aria-label="Mundo 3D"></canvas>
-<div class="hud top"><div class="brand"><strong>CHORÃO ONLINE</strong><span>O Vale Esquecido · RPG 3D</span></div><div class="panel status">ESTADO: <b id="state">gerando vale…</b><br>JOGADOR: <span id="playerName">Guerreiro</span></div></div>
-<div class="hud panel quest"><div class="eyebrow">Missão principal · 01</div><h2>O Despertar do Vale</h2><p>Atravesse a floresta e encontre o cristal sagrado para restaurar a luz.</p><div class="objective" id="objective">◇ Cristal sagrado: procure na clareira</div><div class="enemy-status" id="enemyStatus"><div class="vital-label"><span>GUARDIÃO DA FLORESTA</span><b id="enemyHealthText">100%</b></div><div class="vital-track"><div id="enemyHealthBar"></div></div></div><div class="vitals"><div class="vital-label"><span>VIDA</span><b id="playerHealthText">100%</b></div><div class="vital-track"><div id="playerHealthBar" style="background:linear-gradient(90deg,#b44d46,#e8a26b)"></div></div><div class="vital-label" style="margin-top:10px"><span>VIGOR</span><b id="staminaText">100%</b></div><div class="vital-track"><div id="staminaBar"></div></div><div class="vital-label" style="margin-top:10px"><span>EXPERIÊNCIA</span><b id="xpText">Nível 1 · 0/100 XP</b></div><div class="vital-track"><div id="xpBar" style="background:linear-gradient(90deg,#6e9bdf,#b5d6ff);width:0%"></div></div></div></div>
-<div id="inventoryHud" class="hud" style="position:fixed;right:14px;top:88px;z-index:12;padding:10px 12px;min-width:150px;background:rgba(12,22,20,.85);border:1px solid rgba(202,180,120,.45);border-radius:10px;color:#f5e8c8;font:12px/1.6 system-ui;pointer-events:none"><b style="letter-spacing:.08em">INVENTÁRIO</b><div id="inventoryItems">🎒 Bolsa vazia</div></div>
-<div class="hud help">PC: <b>W A S D</b> ou setas · <b>Shift</b> correr · botão direito gira a câmera.<br>Celular: direcional na tela e botões de ação.</div>
-<div class="hud bottom"><button class="chip primary" id="runBtn">⇧ Correr: desligado</button><button class="chip" id="interactBtn">◎ Interagir</button><button class="chip" id="attackBtn">⚔ Atacar</button><button class="chip" id="skillBtn">✧ Pulso arcano</button><button class="chip" id="magicBtn">✧ Despertar cristal</button><button class="chip" id="cameraBtn">◉ Recentrar câmera</button><button class="chip" id="infoBtn">ⓘ Sobre o jogo</button></div>
-<div id="joystick"><div id="stick"></div></div>
-<div id="notice" hidden></div>
 
-<script src="https://cdn.babylonjs.com/babylon.js"></script>
-<script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+  <canvas id="renderCanvas"></canvas>
 
-<script>
-(()=> {
-const canvas=document.getElementById('renderCanvas'), stateEl=document.getElementById('state'), objective=document.getElementById('objective');
-const notice=document.getElementById('notice');
-const engine=new BABYLON.Engine(canvas,true,{preserveDrawingBuffer:false,stencil:true,antialias:true},true);
-engine.setHardwareScalingLevel(Math.min(1.3,window.devicePixelRatio>1?1.1:1));
-const scene=new BABYLON.Scene(engine);
+  <!-- Painel do Jogador -->
+  <div id="player-hud" class="rag-panel">
+    <div class="char-title">
+      <span>Novato Chorão</span>
+      <span class="char-level" id="player-lvl">Base Lv. 1</span>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label">HP</span>
+      <div class="bar-track">
+        <div id="hp-bar" class="bar-fill bar-fill-hp" style="width: 100%;"></div>
+      </div>
+      <span style="margin-left: 8px; font-size: 10px;" id="hp-text">250/250</span>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label">SP</span>
+      <div class="bar-track">
+        <div id="sp-bar" class="bar-fill bar-fill-sp" style="width: 100%;"></div>
+      </div>
+      <span style="margin-left: 8px; font-size: 10px;" id="sp-text">60/60</span>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label">EXP</span>
+      <div class="bar-track">
+        <div id="exp-bar" class="bar-fill bar-fill-exp" style="width: 0%;"></div>
+      </div>
+      <span style="margin-left: 8px; font-size: 10px;" id="exp-text">0%</span>
+    </div>
+  </div>
 
-const skybox=BABYLON.MeshBuilder.CreateBox("skyBox",{size:800.0},scene);
-const skyboxMaterial=new BABYLON.StandardMaterial("skyBoxMat",scene);
-skyboxMaterial.backFaceCulling=false;
-skyboxMaterial.reflectionTexture=new BABYLON.CubeTexture("https://playground.babylonjs.com/textures/skybox",scene);
-skyboxMaterial.reflectionTexture.coordinatesMode=BABYLON.Texture.SKYBOX_MODE;
-skyboxMaterial.diffuseColor=new BABYLON.Color3(0,0,0);
-skyboxMaterial.specularColor=new BABYLON.Color3(0,0,0);
-skybox.material=skyboxMaterial;
+  <!-- Alvo Focado (Poring) -->
+  <div id="target-hud" class="rag-panel">
+    <div id="target-name">Poring [Nv. 1]</div>
+    <div class="bar-track" style="height: 8px;">
+      <div id="target-hp-bar" class="bar-fill bar-fill-hp" style="width: 100%;"></div>
+    </div>
+  </div>
 
-scene.fogMode=BABYLON.Scene.FOGMODE_EXP2;
-scene.fogDensity=0.003;
-scene.fogColor=new BABYLON.Color3(0.58,0.72,0.85);
+  <!-- Moedas e Drops -->
+  <div id="status-hud" class="rag-panel">
+    <div class="zeny-box">
+      <span>🪙</span> <span id="zeny-val">150</span> Zeny
+    </div>
+    <div class="inventory-pills" id="drops-count">
+      Gelatinas: 0 | Maçãs: 0
+    </div>
+  </div>
 
-const camera=new BABYLON.ArcRotateCamera('camera',-Math.PI/2,1.2,11,new BABYLON.Vector3(0,1.5,0),scene);
-camera.lowerRadiusLimit=4;camera.upperRadiusLimit=20;camera.lowerBetaLimit=0.35;camera.upperBetaLimit=1.45;
-camera.wheelPrecision=35;camera.panningSensibility=0;camera.attachControl(canvas,true);
+  <!-- Combat Log -->
+  <div id="combat-log"></div>
 
-const hemi=new BABYLON.HemisphericLight('skyLight',new BABYLON.Vector3(0,1,0),scene);
-hemi.intensity=0.75;hemi.diffuse=new BABYLON.Color3(0.96,0.92,0.82);hemi.groundColor=new BABYLON.Color3(0.24,0.36,0.22);
+  <!-- Dica de Controles -->
+  <div id="click-tip">
+    🖱️ Clique no chão para andar | Clique no Poring para atacar | WASD para movimentação livre
+  </div>
 
-const sun=new BABYLON.DirectionalLight('sun',new BABYLON.Vector3(-0.6,-1.2,0.5),scene);
-sun.position=new BABYLON.Vector3(50,90,-40);sun.intensity=1.85;sun.diffuse=new BABYLON.Color3(1.0,0.94,0.78);
+  <!-- Barra de Ações -->
+  <div id="bottom-bar" class="rag-panel">
+    <button class="hud-btn" id="btn-attack">⚔️ Golpear</button>
+    <button class="hud-btn" id="btn-bash">💥 Golpe Fulminante (10 SP)</button>
+    <button class="hud-btn" id="btn-respawn">✨ Respawn Porings</button>
+  </div>
 
-const shadows=new BABYLON.ShadowGenerator(2048,sun);
-shadows.useBlurExponentialShadowMap=true;shadows.blurKernel=24;shadows.setDarkness(0.35);
+  <script>
+    const canvas = document.getElementById("renderCanvas");
+    const engine = new BABYLON.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true });
 
-const glowLayer=new BABYLON.GlowLayer('glow',scene,{mainTextureRatio:0.5,blurKernelSize:32});
-glowLayer.intensity=0.8;
+    // Estado do Jogador estilo RPG
+    const playerState = {
+      lvl: 1,
+      hp: 250,
+      maxHp: 250,
+      sp: 60,
+      maxSp: 60,
+      exp: 0,
+      expNext: 100,
+      zeny: 150,
+      jellopy: 0,
+      apple: 0,
+      targetEnemy: null
+    };
 
-const pipeline=new BABYLON.DefaultRenderingPipeline('wowPipeline',true,scene,[camera]);
-pipeline.bloomEnabled=true;pipeline.bloomThreshold=0.7;pipeline.bloomWeight=0.45;pipeline.bloomKernel=64;
-pipeline.imageProcessingEnabled=true;pipeline.imageProcessing.contrast=1.24;pipeline.imageProcessing.exposure=1.12;
-pipeline.imageProcessing.toneMappingEnabled=true;pipeline.imageProcessing.toneMappingType=BABYLON.ImageProcessingConfiguration.TONEMAPPING_ACES;
-pipeline.imageProcessing.vignetteEnabled=true;pipeline.imageProcessing.vignetteWeight=1.3;pipeline.fxaaEnabled=true;
-
-const groundMat=new BABYLON.StandardMaterial('groundMat',scene);
-groundMat.diffuseTexture=new BABYLON.Texture('https://playground.babylonjs.com/textures/grass.png',scene);
-groundMat.diffuseTexture.uScale=32;groundMat.diffuseTexture.vScale=32;
-groundMat.specularColor=new BABYLON.Color3(0.05,0.08,0.05);
-
-const groundWidth=160,groundHeight=160,subdivisions=90;
-const ground=BABYLON.MeshBuilder.CreateGround('valeOrganico',{width:groundWidth,height:groundHeight,subdivisions:subdivisions,updatable:true},scene);
-ground.material=groundMat;ground.receiveShadows=true;
-
-const positions=ground.getVerticesData(BABYLON.VertexBuffer.PositionKind);
-for(let i=0;i<positions.length;i+=3){
-  const x=positions[i],z=positions[i+2];
-  const distFromCenter=Math.hypot(x,z);
-  let elevation=Math.sin(x*0.06)*Math.cos(z*0.06)*1.8 + Math.sin(x*0.15)*0.6;
-  if(distFromCenter>45) elevation+=(distFromCenter-45)*0.22;
-  positions[i+1]=elevation;
-}
-ground.setVerticesData(BABYLON.VertexBuffer.PositionKind,positions);
-BABYLON.VertexData.ComputeNormals(positions,ground.getIndices(),ground.getVerticesData(BABYLON.VertexBuffer.NormalKind));
-
-function getGroundHeight(x,z){
-  const distFromCenter=Math.hypot(x,z);
-  let h=Math.sin(x*0.06)*Math.cos(z*0.06)*1.8 + Math.sin(x*0.15)*0.6;
-  if(distFromCenter>45) h+=(distFromCenter-45)*0.22;
-  return h;
-}
-
-const pineWoodMat=new BABYLON.StandardMaterial('pineWood',scene);
-pineWoodMat.diffuseColor=new BABYLON.Color3(0.28,0.18,0.12);
-const pineNeedleMat1=new BABYLON.StandardMaterial('pineNeedle1',scene);
-pineNeedleMat1.diffuseColor=new BABYLON.Color3(0.12,0.34,0.18);
-const pineNeedleMat2=new BABYLON.StandardMaterial('pineNeedle2',scene);
-pineNeedleMat2.diffuseColor=new BABYLON.Color3(0.18,0.42,0.22);
-const rockMat=new BABYLON.StandardMaterial('rockMat',scene);
-rockMat.diffuseTexture=new BABYLON.Texture('https://playground.babylonjs.com/textures/rock.png',scene);
-rockMat.diffuseTexture.uScale=3;rockMat.diffuseTexture.vScale=3;
-
-function createPineTree(x,z,scale=1){
-  const y=getGroundHeight(x,z);
-  const root=new BABYLON.TransformNode('pinheiro',scene);root.position.set(x,y,z);
-  const trunk=BABYLON.MeshBuilder.CreateCylinder('tronco',{height:3*scale,diameterTop:0.25*scale,diameterBottom:0.55*scale,tessellation:7},scene);
-  trunk.parent=root;trunk.position.y=1.5*scale;trunk.material=pineWoodMat;
-  trunk.receiveShadows=true;shadows.addShadowCaster(trunk);
-  for(let c=0;c<3;c++){
-    const cone=BABYLON.MeshBuilder.CreateCylinder('copaCone_'+c,{height:2.2*scale,diameterTop:0.1,diameterBottom:(2.6-c*0.5)*scale,tessellation:8},scene);
-    cone.parent=root;cone.position.y=(2.4+c*1.2)*scale;
-    cone.material=c%2===0?pineNeedleMat1:pineNeedleMat2;
-    cone.receiveShadows=true;shadows.addShadowCaster(cone);
-  }
-}
-
-let seed=77;const rnd=()=>{seed=(seed*1664525+1013904223)>>>0;return seed/4294967296};
-for(let i=0;i<65;i++){
-  const angle=rnd()*Math.PI*2,rad=14+rnd()*45;
-  const x=Math.cos(angle)*rad,z=Math.sin(angle)*rad;
-  if(Math.hypot(x,z)<8)continue;
-  createPineTree(x,z,0.85+rnd()*0.7);
-}
-
-for(let i=0;i<30;i++){
-  const x=(rnd()-0.5)*75,z=(rnd()-0.5)*75;
-  if(Math.hypot(x,z)<6)continue;
-  const y=getGroundHeight(x,z);
-  const rock=BABYLON.MeshBuilder.CreatePolyhedron('rocha',{type:2,size:0.8+rnd()*1.4},scene);
-  rock.position.set(x,y+0.4,z);rock.scaling.set(1+rnd()*0.6,0.6+rnd()*0.7,1+rnd()*0.5);
-  rock.rotation.set(rnd()*2,rnd()*3,rnd()*2);rock.material=rockMat;
-  rock.receiveShadows=true;shadows.addShadowCaster(rock);
-}
-
-const crystalRoot=new BABYLON.TransformNode('cristal-sagrado',scene);
-crystalRoot.position.set(3,getGroundHeight(3,-7)+1.2,-7);
-const goldMat=new BABYLON.StandardMaterial('cristalOuro',scene);
-goldMat.diffuseColor=new BABYLON.Color3(1,0.8,0.3);goldMat.emissiveColor=new BABYLON.Color3(0.85,0.45,0.08);
-
-for(let i=0;i<4;i++){
-  const c=BABYLON.MeshBuilder.CreatePolyhedron('pedraCristal',{type:1,size:0.65},scene);
-  c.parent=crystalRoot;c.position.set((i-1.5)*0.38,i*0.2,0);
-  c.scaling.set(0.6,1.8-i*0.15,0.6);c.rotation.z=(i-1.5)*0.25;c.material=goldMat;
-  shadows.addShadowCaster(c);
-}
-const ring=BABYLON.MeshBuilder.CreateTorus('runaMagica',{diameter:3.2,thickness:0.04,tessellation:48},scene);
-ring.parent=crystalRoot;ring.position.y=-0.9;ring.rotation.x=Math.PI/2;ring.material=goldMat;
-
-const particles=new BABYLON.ParticleSystem('magiaCristal',400,scene);
-particles.particleTexture=new BABYLON.Texture('https://playground.babylonjs.com/textures/flare.png',scene);
-particles.emitter=crystalRoot.position;
-particles.color1=new BABYLON.Color4(1,0.85,0.4,1);particles.color2=new BABYLON.Color4(0.3,0.8,1,0.8);
-particles.minSize=0.04;particles.maxSize=0.18;particles.emitRate=75;
-particles.blendMode=BABYLON.ParticleSystem.BLENDMODE_ADD;particles.start();
-
-const playerRoot=new BABYLON.TransformNode('jogadorRoot',scene);
-playerRoot.position.set(0,getGroundHeight(0,4),4);
-
-let currentAnim=null,skeleton=null;
-let isMoving=false,isRunning=false,stamina=100;
-let playerLevel=1,playerXP=0,guardianEmblems=0;
-let crystalFound=false;
-
-BABYLON.SceneLoader.ImportMeshAsync("", "https://playground.babylonjs.com/scenes/", "dummy3.babylon", scene).then((result)=>{
-  const mainMesh=result.meshes[0];
-  mainMesh.parent=playerRoot;
-  mainMesh.position.set(0,0,0);
-  mainMesh.scaling.set(0.019,0.019,0.019);
-  skeleton=result.skeletons[0];
-  result.meshes.forEach(m=>{
-    m.receiveShadows=true;
-    shadows.addShadowCaster(m,true);
-  });
-  if(skeleton){
-    currentAnim=scene.beginAnimation(skeleton,0,90,true,1.0);
-  }
-  stateEl.textContent='guerreiro pronto';
-}).catch(err=>{
-  console.warn("Avatar alternativo:",err);
-  stateEl.textContent='modo herói ativo';
-});
-
-const enemyRoot=new BABYLON.TransformNode('guardiaoRoot',scene);
-enemyRoot.position.set(6,getGroundHeight(6,-2),-2);
-const beastMat=new BABYLON.StandardMaterial('beastMat',scene);beastMat.diffuseColor=new BABYLON.Color3(0.25,0.38,0.22);
-const beastDark=new BABYLON.StandardMaterial('beastDark',scene);beastDark.diffuseColor=new BABYLON.Color3(0.12,0.1,0.08);
-const beastEye=new BABYLON.StandardMaterial('beastEye',scene);beastEye.emissiveColor=new BABYLON.Color3(1,0.3,0.05);
-
-const enemyBody=BABYLON.MeshBuilder.CreateSphere('corpoInimigo',{diameter:1.35,segments:10},scene);
-enemyBody.parent=enemyRoot;enemyBody.position.y=1.1;enemyBody.scaling.set(1.1,0.9,0.8);enemyBody.material=beastMat;
-const enemyHead=BABYLON.MeshBuilder.CreateSphere('cabecaInimigo',{diameter:0.85,segments:10},scene);
-enemyHead.parent=enemyRoot;enemyHead.position.set(0,1.85,0.25);enemyHead.material=beastMat;
-shadows.addShadowCaster(enemyBody);shadows.addShadowCaster(enemyHead);
-
-for(const side of [-1,1]){
-  const horn=BABYLON.MeshBuilder.CreateCylinder('chifre',{height:0.6,diameterTop:0.02,diameterBottom:0.2,tessellation:7},scene);
-  horn.parent=enemyRoot;horn.position.set(side*0.28,2.25,0.15);horn.rotation.z=side*-0.4;horn.material=beastDark;
-  const eye=BABYLON.MeshBuilder.CreateSphere('olho',{diameter:0.12,segments:6},scene);
-  eye.parent=enemyRoot;eye.position.set(side*0.18,1.9,0.58);eye.material=beastEye;
-}
-
-let enemyHealth=100,enemyDefeated=false,enemyAttackCooldown=0,playerHealth=100,playerAttackReadyAt=0,arcaneReadyAt=0;
-const staminaBar=document.getElementById("staminaBar"),staminaText=document.getElementById("staminaText"),playerHealthBar=document.getElementById("playerHealthBar"),playerHealthText=document.getElementById("playerHealthText");
-const xpBar=document.getElementById("xpBar"),xpText=document.getElementById("xpText"),inventoryItems=document.getElementById("inventoryItems");
-
-function refreshXP(){xpBar.style.width=playerXP+"%";xpText.textContent="Nível "+playerLevel+" · "+playerXP+"/100 XP";}
-function refreshInventory(){inventoryItems.textContent=guardianEmblems>0?"🟠 Emblema da Mata ×"+guardianEmblems:"🎒 Bolsa vazia";}
-function awardExperience(amount){playerXP+=amount;while(playerXP>=100){playerXP-=100;playerLevel++;}refreshXP();}
-
-function noticeShow(main,sub=''){notice.innerHTML='<div>'+main+'</div>'+(sub?'<div class="tiny">'+sub+'</div>':'')+'<div style="margin-top:12px"><button class="chip" id="closeNotice">Continuar</button></div>';notice.hidden=false;document.getElementById('closeNotice').onclick=()=>notice.hidden=true}
-document.getElementById('infoBtn').onclick=()=>noticeShow('CHORÃO ONLINE — Vale Esquecido','Mundo com terreno ondulado, skybox 360°, iluminação solar e guerreiro 3D animado.');
-document.getElementById('runBtn').onclick=()=>{isRunning=!isRunning;document.getElementById('runBtn').textContent='⇧ Correr: '+(isRunning?'ligado':'desligado')};
-document.getElementById('cameraBtn').onclick=()=>{camera.alpha=-Math.PI/2;camera.beta=1.2;camera.radius=11};
-
-document.getElementById('magicBtn').onclick=()=>{
-  if(BABYLON.Vector3.Distance(playerRoot.position,crystalRoot.position)<5){
-    if(!crystalFound){
-      crystalFound=true;goldMat.emissiveColor=new BABYLON.Color3(1,0.85,0.3);particles.emitRate=200;
-      objective.textContent='✦ Cristal sagrado: restaurado!';awardExperience(50);
-      noticeShow('Missão Concluída: O Despertar do Vale!','+50 XP obtidos. A floresta volta a brilhar.');
-    }else noticeShow('O cristal já está ativo.','A energia sagrada foi restaurada.');
-  }else noticeShow('O cristal está adiante na clareira.','Aproxime-se do pilar dourado.');
-};
-
-document.getElementById("skillBtn").onclick=()=>{
-  const now=performance.now();if(now<arcaneReadyAt)return;arcaneReadyAt=now+4500;
-  if(enemyDefeated)return;
-  if(BABYLON.Vector3.Distance(playerRoot.position,enemyRoot.position)>7){noticeShow("Fora de alcance.","Aproxime-se do guardião.");return;}
-  enemyHealth=Math.max(0,enemyHealth-40);
-  document.getElementById("enemyHealthBar").style.width=enemyHealth+"%";
-  document.getElementById("enemyHealthText").textContent=enemyHealth+"%";
-  if(enemyHealth===0){enemyDefeated=true;enemyRoot.setEnabled(false);awardExperience(70);guardianEmblems++;refreshInventory();objective.textContent="✦ Guardião vencido! +70 XP";noticeShow("Guardião derrotado com Pulso Arcano!","+70 XP e Emblema conquistados!");}
-  else noticeShow("Pulso Arcano causou 40 de dano!","Vida restante do guardião: "+enemyHealth+"%");
-};
-
-document.getElementById("attackBtn").onclick=()=>{
-  const now=performance.now();if(now<playerAttackReadyAt)return;playerAttackReadyAt=now+500;
-  if(enemyDefeated)return;
-  if(BABYLON.Vector3.Distance(playerRoot.position,enemyRoot.position)<3.5){
-    enemyHealth=Math.max(0,enemyHealth-25);
-    document.getElementById("enemyHealthBar").style.width=enemyHealth+"%";
-    document.getElementById("enemyHealthText").textContent=enemyHealth+"%";
-    if(enemyHealth===0){enemyDefeated=true;enemyRoot.setEnabled(false);awardExperience(70);guardianEmblems++;refreshInventory();objective.textContent="✦ Guardião vencido! +70 XP";noticeShow("Guardião derrotado em combate!","+70 XP e Emblema conquistados!");}
-    else noticeShow("Golpe certeiro!","Vida restante do guardião: "+enemyHealth+"%");
-  }else noticeShow("Aproxime-se para golpear com a espada.");
-};
-
-document.getElementById("interactBtn").onclick=()=>document.getElementById("magicBtn").click();
-
-const keys={};let joy={x:0,y:0};const moveVec=new BABYLON.Vector3(0,0,0);
-window.addEventListener('keydown',e=>{keys[e.key.toLowerCase()]=true;if(e.key==='Shift')isRunning=true});
-window.addEventListener('keyup',e=>{keys[e.key.toLowerCase()]=false;if(e.key==='Shift')isRunning=false});
-
-const joyEl=document.getElementById('joystick'),stick=document.getElementById('stick');let joyId=null;
-joyEl.addEventListener('pointerdown',e=>{joyId=e.pointerId;joyEl.setPointerCapture(joyId);joyMove(e)});
-joyEl.addEventListener('pointermove',e=>{if(e.pointerId===joyId)joyMove(e)});
-function joyMove(e){const r=joyEl.getBoundingClientRect(),cx=r.left+r.width/2,cy=r.top+r.height/2;let dx=e.clientX-cx,dy=e.clientY-cy,mag=Math.hypot(dx,dy),max=35;if(mag>max){dx=dx/mag*max;dy=dy/mag*max}joy.x=dx/max;joy.y=dy/max;stick.style.transform='translate('+dx+'px,'+dy+'px)'}
-function joyEnd(e){if(e.pointerId===joyId){joyId=null;joy.x=0;joy.y=0;stick.style.transform='translate(0,0)'}}
-joyEl.addEventListener('pointerup',joyEnd);joyEl.addEventListener('pointercancel',joyEnd);
-
-let lastAnimState="idle";
-function setAnimation(name){
-  if(!skeleton||lastAnimState===name)return;
-  lastAnimState=name;
-  scene.stopAnimation(skeleton);
-  if(name==="idle") scene.beginAnimation(skeleton,0,90,true,1.0);
-  else if(name==="walk") scene.beginAnimation(skeleton,91,126,true,1.1);
-  else if(name==="run") scene.beginAnimation(skeleton,127,148,true,1.25);
-}
-
-scene.onBeforeRenderObservable.add(()=>{
-  const dt=Math.min(engine.getDeltaTime()/1000,0.05),t=performance.now()/1000;
-  crystalRoot.position.y=getGroundHeight(3,-7)+1.2+Math.sin(t*1.5)*0.15;
-  crystalRoot.rotation.y+=dt*0.35;
-  ring.rotation.z+=dt*0.2;
-
-  const forward=(keys.w||keys.arrowup?1:0)-(keys.s||keys.arrowdown?1:0)-joy.y;
-  const strafe=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0)+joy.x;
-  const mag=Math.hypot(forward,strafe);
-  isMoving=mag>0.12;
-
-  const wantsRun=isRunning&&isMoving&&stamina>0;
-  if(wantsRun)stamina=Math.max(0,stamina-22*dt);else stamina=Math.min(100,stamina+15*dt);
-  staminaBar.style.width=stamina+"%";staminaText.textContent=Math.round(stamina)+"%";
-
-  if(isMoving){
-    setAnimation(wantsRun?"run":"walk");
-    const f=forward/(mag||1),s=strafe/(mag||1);
-    const camForward=new BABYLON.Vector3(Math.sin(camera.alpha),0,Math.cos(camera.alpha));
-    const camRight=new BABYLON.Vector3(camForward.z,0,-camForward.x);
-    moveVec.copyFrom(camForward).scaleInPlace(f).addInPlace(camRight.scale(s)).normalize();
-
-    const speed=wantsRun?6.2:3.4;
-    playerRoot.position.addInPlace(moveVec.scale(speed*dt));
-    playerRoot.position.y=getGroundHeight(playerRoot.position.x,playerRoot.position.z);
-    playerRoot.rotation.y=Math.atan2(moveVec.x,moveVec.z);
-  }else{
-    setAnimation("idle");
-    playerRoot.position.y=getGroundHeight(playerRoot.position.x,playerRoot.position.z);
-  }
-
-  camera.target=BABYLON.Vector3.Lerp(camera.target,new BABYLON.Vector3(playerRoot.position.x,playerRoot.position.y+1.5,playerRoot.position.z),Math.min(1,dt*4));
-
-  if(!enemyDefeated){
-    const dist=BABYLON.Vector3.Distance(enemyRoot.position,playerRoot.position);
-    if(dist<8&&dist>1.5){
-      const dir=playerRoot.position.subtract(enemyRoot.position);dir.y=0;dir.normalize();
-      enemyRoot.position.addInPlace(dir.scale(dt*1.2));
-      enemyRoot.position.y=getGroundHeight(enemyRoot.position.x,enemyRoot.position.z);
-      enemyRoot.rotation.y=Math.atan2(dir.x,dir.z);
+    function showLog(text, color = "#ffd166") {
+      const log = document.getElementById("combat-log");
+      const item = document.createElement("div");
+      item.className = "log-item";
+      item.style.color = color;
+      item.innerText = text;
+      log.appendChild(item);
+      setTimeout(() => item.remove(), 1800);
     }
-  }
-});
 
-engine.runRenderLoop(()=>scene.render());
-window.addEventListener('resize',()=>engine.resize());
-})();
-</script>
+    function updateUI() {
+      document.getElementById("hp-bar").style.width = `${(playerState.hp / playerState.maxHp) * 100}%`;
+      document.getElementById("hp-text").innerText = `${playerState.hp}/${playerState.maxHp}`;
+      
+      document.getElementById("sp-bar").style.width = `${(playerState.sp / playerState.maxSp) * 100}%`;
+      document.getElementById("sp-text").innerText = `${playerState.sp}/${playerState.maxSp}`;
+      
+      const expPct = Math.floor((playerState.exp / playerState.expNext) * 100);
+      document.getElementById("exp-bar").style.width = `${expPct}%`;
+      document.getElementById("exp-text").innerText = `${expPct}%`;
+      
+      document.getElementById("player-lvl").innerText = `Base Lv. ${playerState.lvl}`;
+      document.getElementById("zeny-val").innerText = playerState.zeny;
+      document.getElementById("drops-count").innerText = `Gelatinas: ${playerState.jellopy} | Maçãs: ${playerState.apple}`;
+
+      const targetHud = document.getElementById("target-hud");
+      if (playerState.targetEnemy && !playerState.targetEnemy.isDead) {
+        targetHud.style.display = "block";
+        document.getElementById("target-name").innerText = `${playerState.targetEnemy.name} [Nv. ${playerState.targetEnemy.lvl}]`;
+        const tHpPct = (playerState.targetEnemy.hp / playerState.targetEnemy.maxHp) * 100;
+        document.getElementById("target-hp-bar").style.width = `${Math.max(0, tHpPct)}%`;
+      } else {
+        targetHud.style.display = "none";
+      }
+    }
+
+    // Criar a Cena
+    const createScene = function() {
+      const scene = new BABYLON.Scene(engine);
+      scene.clearColor = new BABYLON.Color4(0.5, 0.75, 0.95, 1);
+      scene.fogMode = BABYLON.Scene.FOGMODE_EXP2;
+      scene.fogDensity = 0.006;
+      scene.fogColor = new BABYLON.Color3(0.65, 0.8, 0.95);
+
+      // Câmera estilo Ragnarök (vista isométrica/terceira pessoa suave)
+      const camera = new BABYLON.ArcRotateCamera("Camera", -Math.PI / 2, Math.PI / 3, 26, new BABYLON.Vector3(0, 1, 0), scene);
+      camera.attachControl(canvas, true);
+      camera.lowerRadiusLimit = 12;
+      camera.upperRadiusLimit = 42;
+      camera.upperBetaLimit = Math.PI / 2.2;
+
+      // Luz Solar e Ambiente
+      const sun = new BABYLON.DirectionalLight("sun", new BABYLON.Vector3(-0.6, -1, 0.5), scene);
+      sun.intensity = 1.6;
+      sun.diffuse = new BABYLON.Color3(1, 0.98, 0.88);
+
+      const hemi = new BABYLON.HemisphericLight("hemi", new BABYLON.Vector3(0, 1, 0), scene);
+      hemi.intensity = 0.8;
+      hemi.groundColor = new BABYLON.Color3(0.2, 0.35, 0.15);
+
+      // Gerador de Sombras
+      const shadowGenerator = new BABYLON.ShadowGenerator(1024, sun);
+      shadowGenerator.useBlurExponentialShadowMap = true;
+      shadowGenerator.blurKernel = 16;
+
+      // Terreno Verdejante (Prontera Field)
+      const ground = BABYLON.MeshBuilder.CreateGroundFromHeightMap("ground", 
+        "https://playground.babylonjs.com/textures/heightMap.png", {
+          width: 220,
+          height: 220,
+          subdivisions: 120,
+          minHeight: 0,
+          maxHeight: 4,
+          onReady: function(gr) {
+            gr.receiveShadows = true;
+          }
+        }, scene);
+
+      const groundMat = new BABYLON.StandardMaterial("groundMat", scene);
+      groundMat.diffuseTexture = new BABYLON.Texture("https://playground.babylonjs.com/textures/grass.png", scene);
+      groundMat.diffuseTexture.uScale = 25;
+      groundMat.diffuseTexture.vScale = 25;
+      groundMat.specularColor = new BABYLON.Color3(0.05, 0.05, 0.05);
+      ground.material = groundMat;
+
+      // Skybox Clássico
+      const skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 600 }, scene);
+      const skyboxMaterial = new BABYLON.StandardMaterial("skyBoxMat", scene);
+      skyboxMaterial.backFaceCulling = false;
+      skyboxMaterial.reflectionTexture = new BABYLON.CubeTexture("https://playground.babylonjs.com/textures/skybox", scene);
+      skyboxMaterial.reflectionTexture.coordinatesMode = BABYLON.Texture.SKYBOX_MODE;
+      skyboxMaterial.diffuseColor = new BABYLON.Color3(0, 0, 0);
+      skyboxMaterial.specularColor = new BABYLON.Color3(0, 0, 0);
+      skybox.material = skyboxMaterial;
+
+      // Marcador de clique no chão (Target reticle verde)
+      const clickMarker = BABYLON.MeshBuilder.CreateTorus("clickMarker", { diameter: 1.5, thickness: 0.1, tessellation: 24 }, scene);
+      const markerMat = new BABYLON.StandardMaterial("markerMat", scene);
+      markerMat.emissiveColor = new BABYLON.Color3(0.2, 1, 0.4);
+      markerMat.alpha = 0.8;
+      clickMarker.material = markerMat;
+      clickMarker.isVisible = false;
+
+      // Personagem do Jogador (Herói com visual aventureiro)
+      const hero = new BABYLON.TransformNode("hero", scene);
+      hero.position = new BABYLON.Vector3(0, 0, 0);
+
+      // Corpo estilizado do aventureiro
+      const bodyMat = new BABYLON.StandardMaterial("heroBodyMat", scene);
+      bodyMat.diffuseColor = new BABYLON.Color3(0.2, 0.4, 0.85);
+
+      const skinMat = new BABYLON.StandardMaterial("heroSkinMat", scene);
+      skinMat.diffuseColor = new BABYLON.Color3(1, 0.82, 0.7);
+
+      const hairMat = new BABYLON.StandardMaterial("heroHairMat", scene);
+      hairMat.diffuseColor = new BABYLON.Color3(0.9, 0.65, 0.2); // Loiro estilo Ragnarök
+
+      const heroBody = BABYLON.MeshBuilder.CreateCylinder("heroBody", { height: 1.5, diameterTop: 0.6, diameterBottom: 0.8 }, scene);
+      heroBody.position.y = 1.0;
+      heroBody.material = bodyMat;
+      heroBody.parent = hero;
+      shadowGenerator.addShadowCaster(heroBody);
+
+      const heroHead = BABYLON.MeshBuilder.CreateSphere("heroHead", { diameter: 0.8 }, scene);
+      heroHead.position.y = 2.0;
+      heroHead.material = skinMat;
+      heroHead.parent = hero;
+      shadowGenerator.addShadowCaster(heroHead);
+
+      const heroHair = BABYLON.MeshBuilder.CreateSphere("heroHair", { diameter: 0.88, slice: 0.6 }, scene);
+      heroHair.rotation.x = Math.PI;
+      heroHair.position.y = 2.15;
+      heroHair.material = hairMat;
+      heroHair.parent = hero;
+
+      // Espada do Aprendiz
+      const sword = BABYLON.MeshBuilder.CreateBox("sword", { width: 0.12, height: 1.2, depth: 0.05 }, scene);
+      const swordMat = new BABYLON.StandardMaterial("swordMat", scene);
+      swordMat.diffuseColor = new BABYLON.Color3(0.9, 0.9, 0.95);
+      swordMat.specularColor = new BABYLON.Color3(1, 1, 1);
+      sword.material = swordMat;
+      sword.position = new BABYLON.Vector3(0.55, 1.2, 0.3);
+      sword.rotation.z = -Math.PI / 4;
+      sword.parent = hero;
+      shadowGenerator.addShadowCaster(sword);
+
+      // ==========================================
+      // FÁBRICA DE PORINGS (Estilo Ragnarök)
+      // ==========================================
+      const poringMaterial = new BABYLON.StandardMaterial("poringMat", scene);
+      poringMaterial.diffuseColor = new BABYLON.Color3(1, 0.45, 0.55); // Rosa clássico
+      poringMaterial.specularColor = new BABYLON.Color3(0.8, 0.6, 0.7);
+      poringMaterial.emissiveColor = new BABYLON.Color3(0.3, 0.05, 0.1);
+
+      const eyeWhiteMat = new BABYLON.StandardMaterial("eyeWhite", scene);
+      eyeWhiteMat.diffuseColor = new BABYLON.Color3(1, 1, 1);
+
+      const eyePupilMat = new BABYLON.StandardMaterial("eyePupil", scene);
+      eyePupilMat.diffuseColor = new BABYLON.Color3(0, 0, 0);
+
+      const enemies = [];
+
+      function createPoring(x, z, name = "Poring", lvl = 1, hp = 60) {
+        const root = new BABYLON.TransformNode("poring_root", scene);
+        root.position = new BABYLON.Vector3(x, 0, z);
+
+        // Corpo gelatinoso achatado
+        const blob = BABYLON.MeshBuilder.CreateSphere("blob", { diameterX: 1.2, diameterY: 0.95, diameterZ: 1.1, segments: 16 }, scene);
+        blob.position.y = 0.5;
+        blob.material = poringMaterial;
+        blob.parent = root;
+        shadowGenerator.addShadowCaster(blob);
+
+        // Olho Esquerdo
+        const eyeL = BABYLON.MeshBuilder.CreateSphere("eyeL", { diameterX: 0.18, diameterY: 0.28, diameterZ: 0.1 }, scene);
+        eyeL.position = new BABYLON.Vector3(-0.25, 0.65, 0.48);
+        eyeL.material = eyeWhiteMat;
+        eyeL.parent = root;
+
+        const pupilL = BABYLON.MeshBuilder.CreateSphere("pupilL", { diameter: 0.1 }, scene);
+        pupilL.position = new BABYLON.Vector3(-0.25, 0.65, 0.54);
+        pupilL.material = eyePupilMat;
+        pupilL.parent = root;
+
+        // Olho Direito
+        const eyeR = BABYLON.MeshBuilder.CreateSphere("eyeR", { diameterX: 0.18, diameterY: 0.28, diameterZ: 0.1 }, scene);
+        eyeR.position = new BABYLON.Vector3(0.25, 0.65, 0.48);
+        eyeR.material = eyeWhiteMat;
+        eyeR.parent = root;
+
+        const pupilR = BABYLON.MeshBuilder.CreateSphere("pupilR", { diameter: 0.1 }, scene);
+        pupilR.position = new BABYLON.Vector3(0.25, 0.65, 0.54);
+        pupilR.material = eyePupilMat;
+        pupilR.parent = root;
+
+        // Metadados do Monstro
+        const enemyData = {
+          name,
+          lvl,
+          hp,
+          maxHp: hp,
+          root,
+          blob,
+          isDead: false,
+          bounceOffset: Math.random() * 10,
+          speed: 0.02 + Math.random() * 0.02,
+          targetPos: new BABYLON.Vector3(x, 0, z)
+        };
+
+        // Clique no Poring para selecionar/atacar
+        blob.actionManager = new BABYLON.ActionManager(scene);
+        blob.actionManager.registerAction(
+          new BABYLON.ExecuteCodeAction(BABYLON.ActionManager.OnPickTrigger, function () {
+            selectTarget(enemyData);
+          })
+        );
+
+        enemies.push(enemyData);
+        return enemyData;
+      }
+
+      // Spawna 14 Porings pelo campo
+      function spawnFieldPorings() {
+        enemies.forEach(e => {
+          if (e.root) e.root.dispose();
+        });
+        enemies.length = 0;
+
+        for (let i = 0; i < 14; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const dist = 10 + Math.random() * 45;
+          const px = Math.cos(angle) * dist;
+          const pz = Math.sin(angle) * dist;
+          createPoring(px, pz, "Poring", 1, 50);
+        }
+      }
+      spawnFieldPorings();
+
+      // ==========================================
+      // SISTEMA DE NÚMERO DE DANO FLUTUANTE
+      // ==========================================
+      function showDamageNumber(pos, amount, isCrit = false) {
+        const textPlane = BABYLON.MeshBuilder.CreatePlane("dmgText", { width: 3, height: 1.5 }, scene);
+        textPlane.position = pos.clone().add(new BABYLON.Vector3(0, 1.8, 0));
+        textPlane.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
+
+        const advTexture = BABYLON.GUI.AdvancedDynamicTexture.CreateForMesh(textPlane);
+        const textBlock = new BABYLON.GUI.TextBlock();
+        textBlock.text = `${amount}`;
+        textBlock.color = isCrit ? "#ffea00" : "#ffffff";
+        textBlock.fontSize = isCrit ? 64 : 48;
+        textBlock.fontFamily = "'Cinzel', sans-serif";
+        textBlock.fontWeight = "bold";
+        textBlock.outlineWidth = 6;
+        textBlock.outlineColor = isCrit ? "#d90429" : "#000000";
+        advTexture.addControl(textBlock);
+
+        // Animação de subida e descarte
+        let elapsed = 0;
+        const obs = scene.onBeforeRenderObservable.add(() => {
+          elapsed += 0.03;
+          textPlane.position.y += 0.04;
+          if (elapsed > 1.2) {
+            scene.onBeforeRenderObservable.remove(obs);
+            textPlane.dispose();
+          }
+        });
+      }
+
+      // Drop de item no chão
+      function spawnDrop(pos) {
+        const isApple = Math.random() > 0.6;
+        const dropMesh = BABYLON.MeshBuilder.CreateSphere("dropItem", { diameter: 0.4 }, scene);
+        dropMesh.position = pos.clone().add(new BABYLON.Vector3(0, 0.4, 0));
+        
+        const dropMat = new BABYLON.StandardMaterial("dropMat", scene);
+        dropMat.diffuseColor = isApple ? new BABYLON.Color3(0.9, 0.1, 0.1) : new BABYLON.Color3(0.2, 0.7, 0.9);
+        dropMat.emissiveColor = isApple ? new BABYLON.Color3(0.4, 0, 0) : new BABYLON.Color3(0, 0.3, 0.4);
+        dropMesh.material = dropMat;
+
+        showLog(`Item dropado: ${isApple ? "🍎 Maçã" : "💧 Gelatina de Poring"}!`, "#70e000");
+
+        // Coleta automática ao passar perto
+        const checkCollect = scene.onBeforeRenderObservable.add(() => {
+          dropMesh.rotation.y += 0.05;
+          const dist = BABYLON.Vector3.Distance(hero.position, dropMesh.position);
+          if (dist < 2.0) {
+            if (isApple) {
+              playerState.apple++;
+              playerState.hp = Math.min(playerState.maxHp, playerState.hp + 30);
+              showLog("+30 HP curado com Maçã!", "#38b000");
+            } else {
+              playerState.jellopy++;
+              playerState.zeny += 18;
+              showLog("+18 Zeny obtido!", "#ffbe0b");
+            }
+            updateUI();
+            scene.onBeforeRenderObservable.remove(checkCollect);
+            dropMesh.dispose();
+          }
+        });
+      }
+
+      // ==========================================
+      // COMBATE E ATAQUE
+      // ==========================================
+      function selectTarget(enemy) {
+        if (enemy.isDead) return;
+        playerState.targetEnemy = enemy;
+        updateUI();
+        showLog(`Alvo: ${enemy.name}!`, "#ff758f");
+      }
+
+      function executeAttack(damageBonus = 0, isBash = false) {
+        const enemy = playerState.targetEnemy;
+        if (!enemy || enemy.isDead) {
+          showLog("Selecione um monstro clicando nele!", "#cbd5e1");
+          return;
+        }
+
+        const dist = BABYLON.Vector3.Distance(hero.position, enemy.root.position);
+        if (dist > 3.5) {
+          // Anda até o monstro
+          targetDestination = enemy.root.position.clone();
+          showLog("Aproximando do alvo...", "#94a3b8");
+          return;
+        }
+
+        // Animação de golpe com a espada
+        const swing = new BABYLON.Animation("swordSwing", "rotation.x", 30, BABYLON.Animation.ANIMATIONTYPE_FLOAT, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT);
+        swing.setKeys([
+          { frame: 0, value: 0 },
+          { frame: 5, value: Math.PI / 2 },
+          { frame: 10, value: 0 }
+        ]);
+        sword.animations = [swing];
+        scene.beginAnimation(sword, 0, 10, false);
+
+        // Cálculo de dano
+        const baseDmg = Math.floor(18 + Math.random() * 12);
+        const totalDmg = baseDmg + damageBonus;
+        enemy.hp -= totalDmg;
+
+        showDamageNumber(enemy.root.position, totalDmg, isBash);
+
+        if (enemy.hp <= 0) {
+          enemy.isDead = true;
+          enemy.root.dispose();
+          playerState.targetEnemy = null;
+
+          // Recompensas
+          const xpGained = 25;
+          playerState.exp += xpGained;
+          playerState.zeny += 12;
+          showLog(`Poring derrotado! +${xpGained} EXP | +12 Zeny`, "#ffd166");
+
+          // Level UP
+          if (playerState.exp >= playerState.expNext) {
+            playerState.lvl++;
+            playerState.exp -= playerState.expNext;
+            playerState.expNext = Math.floor(playerState.expNext * 1.5);
+            playerState.maxHp += 40;
+            playerState.hp = playerState.maxHp;
+            playerState.maxSp += 15;
+            playerState.sp = playerState.maxSp;
+            showLog(`✨ LEVEL UP! Você alcançou o Nível ${playerState.lvl}!`, "#ffea00");
+          }
+
+          spawnDrop(enemy.root.position);
+        }
+
+        updateUI();
+      }
+
+      // Botões de Ação
+      document.getElementById("btn-attack").onclick = () => executeAttack(0, false);
+      
+      document.getElementById("btn-bash").onclick = () => {
+        if (playerState.sp < 10) {
+          showLog("SP insuficiente!", "#ef4444");
+          return;
+        }
+        playerState.sp -= 10;
+        executeAttack(35, true);
+        showLog("💥 Golpe Fulminante!", "#f59e0b");
+      };
+
+      document.getElementById("btn-respawn").onclick = () => {
+        spawnFieldPorings();
+        showLog("Porings renasceram no campo!", "#38b000");
+      };
+
+      // ==========================================
+      // MOVIMENTAÇÃO (POINT & CLICK + WASD)
+      // ==========================================
+      let targetDestination = null;
+      const inputMap = {};
+
+      window.addEventListener("keydown", (evt) => { inputMap[evt.key.toLowerCase()] = true; });
+      window.addEventListener("keyup", (evt) => { inputMap[evt.key.toLowerCase()] = false; });
+
+      // Clique com botão esquerdo para andar
+      scene.onPointerDown = function(evt, pickResult) {
+        if (evt.button === 0) { // Clique esquerdo
+          if (pickResult.hit && pickResult.pickedMesh === ground) {
+            targetDestination = pickResult.pickedPoint.clone();
+            targetDestination.y = 0;
+
+            // Ativa anel verde no chão
+            clickMarker.position = targetDestination.clone().add(new BABYLON.Vector3(0, 0.2, 0));
+            clickMarker.isVisible = true;
+          }
+        }
+      };
+
+      // Loop Principal de Atualização
+      let timer = 0;
+      scene.onBeforeRenderObservable.add(() => {
+        timer += 0.05;
+
+        // Animação dos Porings (Pulos gelatinosos)
+        enemies.forEach(enemy => {
+          if (enemy.isDead) return;
+          const bounce = Math.abs(Math.sin(timer * 4 + enemy.bounceOffset));
+          enemy.blob.position.y = 0.5 + bounce * 0.45;
+          // Deforma a gosma no pouso
+          enemy.blob.scaling.y = 1 - bounce * 0.25;
+          enemy.blob.scaling.x = 1 + bounce * 0.15;
+          enemy.blob.scaling.z = 1 + bounce * 0.15;
+        });
+
+        // Movimento por Teclado (WASD)
+        let movedWithKeys = false;
+        const moveSpeed = 0.35;
+        const moveVector = new BABYLON.Vector3(0, 0, 0);
+
+        if (inputMap["w"] || inputMap["arrowup"]) { moveVector.z += 1; movedWithKeys = true; }
+        if (inputMap["s"] || inputMap["arrowdown"]) { moveVector.z -= 1; movedWithKeys = true; }
+        if (inputMap["a"] || inputMap["arrowleft"]) { moveVector.x -= 1; movedWithKeys = true; }
+        if (inputMap["d"] || inputMap["arrowright"]) { moveVector.x += 1; movedWithKeys = true; }
+
+        if (movedWithKeys) {
+          targetDestination = null;
+          clickMarker.isVisible = false;
+          moveVector.normalize();
+          hero.position.addInPlace(moveVector.scale(moveSpeed));
+          hero.rotation.y = Math.atan2(moveVector.x, moveVector.z);
+        } 
+        // Movimento Point & Click
+        else if (targetDestination) {
+          const toTarget = targetDestination.subtract(hero.position);
+          toTarget.y = 0;
+          const dist = toTarget.length();
+
+          if (dist > 0.4) {
+            toTarget.normalize();
+            hero.position.addInPlace(toTarget.scale(moveSpeed));
+            hero.rotation.y = Math.atan2(toTarget.x, toTarget.z);
+          } else {
+            targetDestination = null;
+            clickMarker.isVisible = false;
+          }
+        }
+
+        // Câmera segue o herói suavemente
+        camera.target = BABYLON.Vector3.Lerp(camera.target, hero.position.clone().add(new BABYLON.Vector3(0, 1.5, 0)), 0.1);
+      });
+
+      // Árvores decorativas de Prontera
+      for (let i = 0; i < 28; i++) {
+        const tx = (Math.random() - 0.5) * 160;
+        const tz = (Math.random() - 0.5) * 160;
+        if (Math.hypot(tx, tz) > 12) {
+          const trunk = BABYLON.MeshBuilder.CreateCylinder("trunk", { height: 3, diameter: 0.6 }, scene);
+          trunk.position = new BABYLON.Vector3(tx, 1.5, tz);
+          const tMat = new BABYLON.StandardMaterial("tMat", scene);
+          tMat.diffuseColor = new BABYLON.Color3(0.4, 0.25, 0.1);
+          trunk.material = tMat;
+
+          const foliage = BABYLON.MeshBuilder.CreateSphere("foliage", { diameter: 4.5, segments: 6 }, scene);
+          foliage.position = new BABYLON.Vector3(tx, 4.2, tz);
+          const fMat = new BABYLON.StandardMaterial("fMat", scene);
+          fMat.diffuseColor = new BABYLON.Color3(0.15, 0.6, 0.2);
+          foliage.material = fMat;
+        }
+      }
+
+      return scene;
+    };
+
+    const scene = createScene();
+    updateUI();
+
+    engine.runRenderLoop(() => {
+      scene.render();
+    });
+
+    window.addEventListener("resize", () => {
+      engine.resize();
+    });
+  </script>
 </body>
 </html>

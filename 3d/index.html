@@ -47,8 +47,15 @@ scene.fogMode=BABYLON.Scene.FOGMODE_EXP2;scene.fogDensity=.009;scene.fogColor=ne
 const camera=new BABYLON.ArcRotateCamera('camera',-Math.PI/2,1.13,10,new BABYLON.Vector3(0,1,0),scene);
 camera.lowerRadiusLimit=5;camera.upperRadiusLimit=14;camera.lowerBetaLimit=.55;camera.upperBetaLimit=1.38;camera.wheelPrecision=45;camera.panningSensibility=0;camera.attachControl(canvas,true);
 const hemi=new BABYLON.HemisphericLight('skyLight',new BABYLON.Vector3(0,1,0),scene);hemi.intensity=.72;hemi.groundColor=new BABYLON.Color3(.22,.29,.2);
-const sun=new BABYLON.DirectionalLight('sun',new BABYLON.Vector3(-.55,-1,.4),scene);sun.position=new BABYLON.Vector3(20,35,-15);sun.intensity=1.25;
+const sun=new BABYLON.DirectionalLight('sun',new BABYLON.Vector3(-.55,-1,.4),scene);sun.position=new BABYLON.Vector3(40,75,-30);sun.intensity=1.45;sun.diffuse=new BABYLON.Color3(1,.94,.78);
 const shadows=new BABYLON.ShadowGenerator(1024,sun);shadows.useBlurExponentialShadowMap=true;shadows.blurKernel=18;shadows.setDarkness(.3);
+// Pipeline cinematográfico solicitado: bloom, correção de cor, vinheta e suavização.
+const glowLayer=new BABYLON.GlowLayer('glow',scene,{mainTextureRatio:.5,blurKernelSize:32});glowLayer.intensity=.75;
+const pipeline=new BABYLON.DefaultRenderingPipeline('wowPipeline',true,scene,[camera]);
+pipeline.bloomEnabled=true;pipeline.bloomThreshold=.72;pipeline.bloomWeight=.42;pipeline.bloomKernel=64;pipeline.bloomScale=.5;
+pipeline.imageProcessingEnabled=true;pipeline.imageProcessing.contrast=1.22;pipeline.imageProcessing.exposure=1.12;pipeline.imageProcessing.toneMappingEnabled=true;pipeline.imageProcessing.toneMappingType=BABYLON.ImageProcessingConfiguration.TONEMAPPING_ACES;
+pipeline.imageProcessing.vignetteEnabled=true;pipeline.imageProcessing.vignetteWeight=1.4;pipeline.imageProcessing.vignetteStretch=.5;pipeline.imageProcessing.vignetteColor=new BABYLON.Color4(0,0,0,.32);
+pipeline.fxaaEnabled=true;pipeline.samples=4;
 const mat=(name,color,rough=.9)=>{const m=new BABYLON.StandardMaterial(name,scene);m.diffuseColor=BABYLON.Color3.FromHexString(color);m.specularColor=new BABYLON.Color3(.12,.12,.12);m.roughness=rough;return m};
 const grass=mat('musgo profundo','#426b4d'), pathMat=mat('trilha antiga','#8a7956'), bark=mat('casca de árvore','#493a2d'), leaf1=mat('folhagem esmeralda','#285a45'),leaf2=mat('folhagem iluminada','#477a50'),stone=mat('pedra fria','#687c7c'),gold=mat('cristal âmbar','#ffce75',.35);gold.emissiveColor=new BABYLON.Color3(.65,.28,.035);
 const ground=BABYLON.MeshBuilder.CreateGround('vale', {width:100,height:100,subdivisions:48},scene);ground.material=grass;ground.receiveShadows=true;
